@@ -10,7 +10,9 @@ import { runMigrations } from './core/migration-runner';
 import { ModuleContext } from './core/module-types';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bodyParser: true
+  });
   const db = new PrismaClient();
   
   await db.$connect();
@@ -60,9 +62,14 @@ async function bootstrap() {
   const { PrivilegeService } = await import('./core/privilege-service');
   serviceRegistry.register('PrivilegeService', new PrivilegeService(db));
 
+  // Configure Express middleware for JSON parsing
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.use(require('express').json());
+  expressApp.use(require('express').urlencoded({ extended: true }));
+
   // Create module context
   const moduleContext: ModuleContext = {
-    app: app.getHttpAdapter().getInstance(),
+    app: expressApp,
     db,
     registerService: serviceRegistry.register.bind(serviceRegistry),
     getService: serviceRegistry.get.bind(serviceRegistry),

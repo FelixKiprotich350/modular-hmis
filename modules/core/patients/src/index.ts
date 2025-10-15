@@ -1,5 +1,5 @@
 import * as path from 'path';
-import type { ModuleContext } from '../../../src/core/module-types';
+import type { ModuleContext } from '../../../../src/core/module-types';
 
 export async function register(ctx: ModuleContext) {
   // Register routes

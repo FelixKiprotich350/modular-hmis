@@ -1,0 +1,2 @@
+-- API Explorer setup - no tables needed for this module
+-- This file exists to satisfy the migration requirement

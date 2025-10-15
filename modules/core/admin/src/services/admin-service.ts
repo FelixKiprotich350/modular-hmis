@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { ModuleRegistry } from '../../../../src/core/module-types';
+import { ModuleRegistry } from '../../../../../src/core/module-types';
 
 export class AdminService {
   constructor(private db: PrismaClient, private moduleRegistry: ModuleRegistry) {}

@@ -1,0 +1,11 @@
+{
+  "name": "users",
+  "version": "1.0.0",
+  "description": "Core user management module",
+  "entry": "dist/index.js",
+  "migrationsDir": "migrations",
+  "privilegesFile": "privileges.js",
+  "enabled": true,
+  "core": true,
+  "dependencies": []
+}

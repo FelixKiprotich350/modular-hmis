@@ -1,0 +1,11 @@
+{
+  "name": "encounters",
+  "version": "1.0.0",
+  "description": "Patient encounters and clinical visits",
+  "entry": "dist/index.js",
+  "migrationsDir": "migrations",
+  "privilegesFile": "privileges.js",
+  "enabled": true,
+  "core": true,
+  "dependencies": ["patients", "providers", "locations"]
+}

@@ -1,10 +1,11 @@
 {
-  "name": "patients",
+  "name": "module-manager",
   "version": "1.0.0",
-  "description": "Patient registration and management",
+  "description": "Core module management and status monitoring",
   "entry": "dist/index.js",
   "migrationsDir": "migrations",
   "privilegesFile": "privileges.js",
   "enabled": true,
+  "core": true,
   "dependencies": []
 }

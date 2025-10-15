@@ -1,0 +1,11 @@
+{
+  "name": "providers",
+  "version": "1.0.0",
+  "description": "Healthcare providers and staff management",
+  "entry": "dist/index.js",
+  "migrationsDir": "migrations",
+  "privilegesFile": "privileges.js",
+  "enabled": true,
+  "core": true,
+  "dependencies": ["users"]
+}

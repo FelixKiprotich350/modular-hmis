@@ -1,0 +1,11 @@
+{
+  "name": "inventory",
+  "version": "1.0.0",
+  "description": "Medical supplies and equipment inventory management",
+  "entry": "dist/index.js",
+  "migrationsDir": "migrations",
+  "privilegesFile": "privileges.js",
+  "enabled": true,
+  "core": false,
+  "dependencies": ["locations", "users"]
+}

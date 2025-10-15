@@ -1,0 +1,11 @@
+{
+  "name": "audit",
+  "version": "1.0.0",
+  "description": "Core audit logging and compliance module",
+  "entry": "dist/index.js",
+  "migrationsDir": "migrations",
+  "privilegesFile": "privileges.js",
+  "enabled": true,
+  "core": true,
+  "dependencies": ["users"]
+}

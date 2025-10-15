@@ -1,0 +1,11 @@
+{
+  "name": "telemedicine",
+  "version": "1.0.0",
+  "description": "Remote consultation and telemedicine services",
+  "entry": "dist/index.js",
+  "migrationsDir": "migrations",
+  "privilegesFile": "privileges.js",
+  "enabled": false,
+  "core": false,
+  "dependencies": ["patients", "providers", "appointments"]
+}

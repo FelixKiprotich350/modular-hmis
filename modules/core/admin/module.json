@@ -1,0 +1,11 @@
+{
+  "name": "admin",
+  "version": "1.0.0",
+  "description": "Core system administration module",
+  "entry": "dist/index.js",
+  "migrationsDir": "migrations",
+  "privilegesFile": "privileges.js",
+  "enabled": true,
+  "core": true,
+  "dependencies": ["users", "auth"]
+}

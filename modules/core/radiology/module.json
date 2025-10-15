@@ -1,0 +1,11 @@
+{
+  "name": "radiology",
+  "version": "1.0.0",
+  "description": "Radiology orders and imaging management",
+  "entry": "dist/index.js",
+  "migrationsDir": "migrations",
+  "privilegesFile": "privileges.js",
+  "enabled": true,
+  "core": true,
+  "dependencies": ["patients", "encounters", "concepts", "providers"]
+}

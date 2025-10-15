@@ -1,10 +1,11 @@
 {
-  "name": "visits",
+  "name": "patients",
   "version": "1.0.0",
-  "description": "Patient visits and encounters management",
+  "description": "Patient registration and management",
   "entry": "dist/index.js",
   "migrationsDir": "migrations",
   "privilegesFile": "privileges.js",
   "enabled": true,
-  "dependencies": ["patients"]
+  "core": true,
+  "dependencies": []
 }

@@ -12,6 +12,7 @@ export interface ModuleManifest {
   privilegesFile?: string;
   enabled: boolean;
   dependencies?: string[];
+  core?: boolean;
 }
 
 export interface ModuleContext {

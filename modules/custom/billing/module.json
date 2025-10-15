@@ -1,0 +1,11 @@
+{
+  "name": "billing",
+  "version": "1.0.0",
+  "description": "Patient billing and financial management",
+  "entry": "dist/index.js",
+  "migrationsDir": "migrations",
+  "privilegesFile": "privileges.js",
+  "enabled": true,
+  "core": false,
+  "dependencies": ["patients", "encounters", "providers"]
+}

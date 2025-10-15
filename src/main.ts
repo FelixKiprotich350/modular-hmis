@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { PrismaClient } from '@prisma/client';
 import { loadModules } from './core/module-loader';
@@ -83,6 +84,16 @@ async function bootstrap() {
 
   // Load modules
   await loadModules(moduleContext);
+
+  // Setup Swagger
+  const config = new DocumentBuilder()
+    .setTitle('Modular Health System API')
+    .setDescription('Healthcare management system with modular architecture')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api-docs', app, document);
 
   // Initialize default roles and privileges
   try {

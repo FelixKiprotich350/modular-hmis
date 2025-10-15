@@ -1,4 +1,5 @@
 import { Router } from 'express';
+// Note: For Express routes in modules, Swagger docs are handled by the API Explorer module
 
 const router = Router();
 

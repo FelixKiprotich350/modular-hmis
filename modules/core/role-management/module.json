@@ -1,0 +1,11 @@
+{
+  "name": "role-management",
+  "version": "1.0.0",
+  "description": "Role and privilege management system",
+  "entry": "dist/index.js",
+  "migrationsDir": "migrations",
+  "privilegesFile": "privileges.js",
+  "enabled": true,
+  "core": true,
+  "dependencies": ["users", "auth"]
+}

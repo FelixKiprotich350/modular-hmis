@@ -56,6 +56,10 @@ async function bootstrap() {
     return userPrivileges.includes(privilege);
   };
 
+  // Register privilege service
+  const { PrivilegeService } = await import('./core/privilege-service');
+  serviceRegistry.register('PrivilegeService', new PrivilegeService(db));
+
   // Create module context
   const moduleContext: ModuleContext = {
     app: app.getHttpAdapter().getInstance(),
@@ -72,6 +76,23 @@ async function bootstrap() {
 
   // Load modules
   await loadModules(moduleContext);
+
+  // Initialize default roles and privileges
+  try {
+    const fs = await import('fs');
+    const path = await import('path');
+    const defaultRolesSql = fs.readFileSync(path.join(__dirname, 'core/default-roles.sql'), 'utf8');
+    const statements = defaultRolesSql.split(';').filter(s => s.trim());
+    
+    for (const statement of statements) {
+      if (statement.trim()) {
+        await db.$executeRawUnsafe(statement.trim());
+      }
+    }
+    console.log('Default roles and privileges initialized');
+  } catch (error) {
+    console.warn('Could not initialize default roles:', error.message);
+  }
 
   await app.listen(3000);
   console.log('Application is running on: http://localhost:3000');

@@ -1,0 +1,10 @@
+{
+  "name": "patients",
+  "version": "1.0.0",
+  "description": "Patient registration and management",
+  "entry": "dist/index.js",
+  "migrationsDir": "migrations",
+  "privilegesFile": "privileges.js",
+  "enabled": true,
+  "dependencies": []
+}

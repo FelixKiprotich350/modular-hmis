@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  roles     UserRole[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Role {
+  id         String         @id @default(cuid())
+  name       String         @unique
+  users      UserRole[]
+  privileges RolePrivilege[]
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User   @relation(fields: [userId], references: [id])
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
+}
+
+model Privilege {
+  id    String          @id @default(cuid())
+  name  String          @unique
+  roles RolePrivilege[]
+}
+
+model RolePrivilege {
+  roleId      String
+  privilegeId String
+  role        Role      @relation(fields: [roleId], references: [id])
+  privilege   Privilege @relation(fields: [privilegeId], references: [id])
+
+  @@id([roleId, privilegeId])
+}
+
+model ModuleMigrationLog {
+  id        String   @id @default(cuid())
+  module    String
+  file      String
+  appliedAt DateTime @default(now())
+
+  @@unique([module, file])
+}

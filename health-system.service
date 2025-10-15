@@ -1,0 +1,23 @@
+[Unit]
+Description=Health System Core API
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=app
+WorkingDirectory=/opt/health/core-api
+ExecStart=/usr/bin/node dist/main.js
+Restart=on-failure
+RestartSec=10
+Environment=NODE_ENV=production
+Environment=DATABASE_URL=postgresql://username:password@localhost:5432/health_system
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/health/core-api/logs
+
+[Install]
+WantedBy=multi-user.target

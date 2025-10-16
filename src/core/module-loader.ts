@@ -50,7 +50,7 @@ async function loadModule(ctx: ModuleContext, baseDir: string, name: string, isC
   const manifest: ModuleManifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   manifest.core = isCore;
   
-  if (!isCore && manifest.enabled === false) {
+  if (manifest.enabled === false) {
     console.log(`Module ${name} disabled; skipping`);
     return;
   }

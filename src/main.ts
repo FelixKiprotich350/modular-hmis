@@ -9,14 +9,22 @@ import { eventBus } from './core/event-bus';
 import { httpClient } from './core/http-client';
 import { runMigrations } from './core/migration-runner';
 import { ModuleContext } from './core/module-types';
+import { setupGlobalDependencies } from './core/dependency-resolver';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  // Discover module controllers dynamically
+  const { getModuleControllers } = await import('./module-controllers');
+  const moduleControllers = await getModuleControllers();
+  
+  const app = await NestFactory.create(AppModule.forRoot(moduleControllers), {
     bodyParser: true
   });
   const db = new PrismaClient();
   
   await db.$connect();
+
+  // Setup global dependencies for modules
+  setupGlobalDependencies();
 
   // Register privileges helper
   const registerPrivileges = async (privileges: string[]) => {

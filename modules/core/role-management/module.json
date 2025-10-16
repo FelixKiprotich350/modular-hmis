@@ -5,7 +5,7 @@
   "entry": "dist/index.js",
   "migrationsDir": "migrations",
   "privilegesFile": "privileges.js",
-  "enabled": true,
+  "enabled": false,
   "core": true,
   "dependencies": ["users", "auth"]
 }

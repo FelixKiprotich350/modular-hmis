@@ -5,7 +5,7 @@
   "entry": "dist/index.js",
   "migrationsDir": "migrations",
   "privilegesFile": "privileges.js",
-  "enabled": false,
+  "enabled": true,
   "core": false,
   "dependencies": ["patients", "providers", "locations"]
 }

@@ -1,7 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpException, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { UserService } from './services/user.service';
 import { PrismaService } from '../../../core/prisma.service';
+import { AuthGuard } from '../../../core/guards/auth.guard';
+import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
+import { Privileges } from '../../../core/decorators/privileges.decorator';
+import { TransactionService } from '../../../core/transaction.service';
 
 class CreateUserDto {
   username: string;
@@ -19,16 +23,29 @@ class AssignRoleDto {
   role: string;
 }
 
+class CreateUserWithRolesDto {
+  username: string;
+  email: string;
+  password: string;
+  roles: string[];
+}
+
 @ApiTags('Users')
 @Controller('api/users')
+@UseGuards(AuthGuard, PrivilegeGuard)
+@ApiBearerAuth()
 export class UsersController {
   private userService: UserService;
 
-  constructor(private prisma: PrismaService) {
+  constructor(
+    private prisma: PrismaService,
+    private transactionService: TransactionService
+  ) {
     this.userService = new UserService(prisma);
   }
 
   @Post()
+  @Privileges('manage_users')
   @ApiOperation({ summary: 'Create user' })
   @ApiResponse({ status: 201, description: 'User created' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -47,6 +64,7 @@ export class UsersController {
   }
 
   @Get()
+  @Privileges('manage_users')
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({ status: 200, description: 'List of users' })
   async findAll() {
@@ -55,6 +73,7 @@ export class UsersController {
   }
 
   @Get(':id')
+  @Privileges('manage_users')
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiResponse({ status: 200, description: 'User found' })
   @ApiResponse({ status: 404, description: 'User not found' })
@@ -67,6 +86,7 @@ export class UsersController {
   }
 
   @Patch(':id')
+  @Privileges('manage_users')
   @ApiOperation({ summary: 'Update user' })
   @ApiResponse({ status: 200, description: 'User updated' })
   @ApiResponse({ status: 404, description: 'User not found' })
@@ -81,6 +101,7 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @Privileges('manage_users')
   @ApiOperation({ summary: 'Delete user' })
   @ApiResponse({ status: 200, description: 'User deleted' })
   async remove(@Param('id') id: string) {
@@ -93,6 +114,7 @@ export class UsersController {
   }
 
   @Post(':id/roles')
+  @Privileges('manage_users')
   @ApiOperation({ summary: 'Assign role to user' })
   @ApiResponse({ status: 200, description: 'Role assigned' })
   @ApiBody({ type: AssignRoleDto })
@@ -105,6 +127,7 @@ export class UsersController {
   }
 
   @Delete(':id/roles/:role')
+  @Privileges('manage_users')
   @ApiOperation({ summary: 'Remove role from user' })
   @ApiResponse({ status: 200, description: 'Role removed' })
   async removeRole(@Param('id') id: string, @Param('role') role: string) {
@@ -113,5 +136,26 @@ export class UsersController {
       throw new HttpException('Failed to remove role', HttpStatus.BAD_REQUEST);
     }
     return { message: `Role ${role} removed from user ${id}` };
+  }
+
+  @Post('with-roles')
+  @Privileges('manage_users')
+  @ApiOperation({ summary: 'Create user with multiple roles (transactional)' })
+  @ApiResponse({ status: 201, description: 'User created with roles' })
+  @ApiBody({ type: CreateUserWithRolesDto })
+  async createUserWithRoles(@Body() createUserDto: CreateUserWithRolesDto) {
+    try {
+      const user = await this.userService.createUserWithRoles(
+        {
+          username: createUserDto.username,
+          email: createUserDto.email,
+          password: createUserDto.password
+        },
+        createUserDto.roles
+      );
+      return { message: 'User created with roles', user };
+    } catch (error) {
+      throw new HttpException('Failed to create user with roles', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }

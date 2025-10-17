@@ -14,8 +14,9 @@ export interface Privilege {
 export class RoleprivilegeService {
   constructor(private db: PrismaClient) {}
 
-  async createRole(data: { name: string }): Promise<Role> {
-    const role = await this.db.role.create({
+  async createRole(data: { name: string }, tx?: any): Promise<Role> {
+    const db = tx || this.db;
+    const role = await db.role.create({
       data: { name: data.name },
       include: {
         privileges: {
@@ -42,8 +43,9 @@ export class RoleprivilegeService {
     };
   }
 
-  async assignPrivilegeToRole(roleId: string, privilegeId: string): Promise<boolean> {
-    await this.db.rolePrivilege.upsert({
+  async assignPrivilegeToRole(roleId: string, privilegeId: string, tx?: any): Promise<boolean> {
+    const db = tx || this.db;
+    await db.rolePrivilege.upsert({
       where: {
         roleId_privilegeId: {
           roleId,
@@ -59,8 +61,9 @@ export class RoleprivilegeService {
     return true;
   }
 
-  async removePrivilegeFromRole(roleId: string, privilegeId: string): Promise<boolean> {
-    await this.db.rolePrivilege.delete({
+  async removePrivilegeFromRole(roleId: string, privilegeId: string, tx?: any): Promise<boolean> {
+    const db = tx || this.db;
+    await db.rolePrivilege.delete({
       where: {
         roleId_privilegeId: {
           roleId,
@@ -69,6 +72,37 @@ export class RoleprivilegeService {
       }
     });
     return true;
+  }
+
+  async createRoleWithPrivileges(roleName: string, privilegeIds: string[]): Promise<Role> {
+    return this.db.$transaction(async (tx) => {
+      const role = await this.createRole({ name: roleName }, tx);
+      
+      for (const privilegeId of privilegeIds) {
+        await this.assignPrivilegeToRole(role.id, privilegeId, tx);
+      }
+      
+      return this.getRoleById(role.id);
+    });
+  }
+
+  async getRoleById(roleId: string): Promise<Role | null> {
+    const role = await this.db.role.findUnique({
+      where: { id: roleId },
+      include: {
+        privileges: {
+          include: { privilege: true }
+        }
+      }
+    });
+
+    if (!role) return null;
+
+    return {
+      id: role.id,
+      name: role.name,
+      privileges: role.privileges.map(rp => rp.privilege.name)
+    };
   }
 
   async getRoles(): Promise<Role[]> {

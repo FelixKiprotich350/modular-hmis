@@ -1,7 +1,9 @@
-import { Controller, Post, Body, Get, Headers, HttpException, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiHeader, ApiBody } from '@nestjs/swagger';
+import { Controller, Post, Body, Get, Headers, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiHeader, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './services/auth.service';
 import { PrismaService } from '../../../core/prisma.service';
+import { AuthGuard } from '../../../core/guards/auth.guard';
+import { User } from '../../../core/decorators/user.decorator';
 
 class LoginDto {
   username: string;
@@ -39,20 +41,11 @@ export class AuthController {
   }
 
   @Get('me')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user' })
-  @ApiHeader({ name: 'Authorization', description: 'Bearer token' })
-  async getCurrentUser(@Headers('authorization') token: string) {
-    if (!token) {
-      throw new HttpException('Token required', HttpStatus.UNAUTHORIZED);
-    }
-    
-    const cleanToken = token.replace('Bearer ', '');
-    const payload = await this.authService.validateToken(cleanToken);
-    
-    if (!payload) {
-      throw new HttpException('Invalid token', HttpStatus.UNAUTHORIZED);
-    }
-    
-    return { user: payload };
+  @ApiResponse({ status: 200, description: 'Current user info' })
+  async getCurrentUser(@User() user: any) {
+    return { user };
   }
 }

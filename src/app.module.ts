@@ -4,13 +4,16 @@ import { AppService } from "./app.service";
 import { PrismaService } from "./core/prisma.service";
 import { ServiceRegistry } from "./core/service-registry";
 import { discoverModules } from "./core/module-loader";
+import { AuthGuard } from "./core/guards/auth.guard";
+import { PrivilegeGuard } from "./core/guards/privilege.guard";
+import { TransactionService } from "./core/transaction.service";
 
 @Module({})
 export class AppModule {
   static forRoot(): DynamicModule {
     const modules = discoverModules();
     const controllers = [];
-    const providers: Provider[] = [AppService, PrismaService, ServiceRegistry];
+    const providers: Provider[] = [AppService, PrismaService, ServiceRegistry, AuthGuard, PrivilegeGuard, TransactionService];
 
     for (const module of modules) {
       try {

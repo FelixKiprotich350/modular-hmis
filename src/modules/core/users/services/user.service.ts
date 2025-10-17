@@ -20,10 +20,11 @@ export interface CreateUserRequest {
 export class UserService {
   constructor(private db: PrismaClient) {}
 
-  async createUser(data: CreateUserRequest): Promise<User> {
+  async createUser(data: CreateUserRequest, tx?: any): Promise<User> {
+    const db = tx || this.db;
     const hashedPassword = await bcrypt.hash(data.password, 10);
     
-    const user = await this.db.user.create({
+    const user = await db.user.create({
       data: {
         username: data.username,
         email: data.email,
@@ -151,16 +152,30 @@ export class UserService {
     };
   }
 
-  async deleteUser(id: string): Promise<boolean> {
-    await this.db.user.delete({ where: { id } });
+  async deleteUser(id: string, tx?: any): Promise<boolean> {
+    const db = tx || this.db;
+    await db.user.delete({ where: { id } });
     return true;
   }
 
-  async assignRole(userId: string, roleName: string): Promise<boolean> {
-    const role = await this.db.role.findUnique({ where: { name: roleName } });
+  async createUserWithRoles(userData: CreateUserRequest, roleNames: string[]): Promise<User> {
+    return this.db.$transaction(async (tx) => {
+      const user = await this.createUser(userData, tx);
+      
+      for (const roleName of roleNames) {
+        await this.assignRole(user.id, roleName, tx);
+      }
+      
+      return this.getUser(user.id);
+    });
+  }
+
+  async assignRole(userId: string, roleName: string, tx?: any): Promise<boolean> {
+    const db = tx || this.db;
+    const role = await db.role.findUnique({ where: { name: roleName } });
     if (!role) return false;
 
-    await this.db.userRole.upsert({
+    await db.userRole.upsert({
       where: {
         userId_roleId: {
           userId,
@@ -177,11 +192,12 @@ export class UserService {
     return true;
   }
 
-  async removeRole(userId: string, roleName: string): Promise<boolean> {
-    const role = await this.db.role.findUnique({ where: { name: roleName } });
+  async removeRole(userId: string, roleName: string, tx?: any): Promise<boolean> {
+    const db = tx || this.db;
+    const role = await db.role.findUnique({ where: { name: roleName } });
     if (!role) return false;
 
-    await this.db.userRole.delete({
+    await db.userRole.delete({
       where: {
         userId_roleId: {
           userId,

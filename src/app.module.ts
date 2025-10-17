@@ -1,9 +1,9 @@
-import { Module, DynamicModule, Provider } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { PrismaService } from './core/prisma.service';
-import { ServiceRegistry } from './core/service-registry';
-import { discoverModules } from './core/module-loader';
+import { Module, DynamicModule, Provider } from "@nestjs/common";
+import { AppController } from "./app.controller";
+import { AppService } from "./app.service";
+import { PrismaService } from "./core/prisma.service";
+import { ServiceRegistry } from "./core/service-registry";
+import { discoverModules } from "./core/module-loader";
 
 @Module({})
 export class AppModule {
@@ -14,19 +14,21 @@ export class AppModule {
 
     for (const module of modules) {
       try {
-        const Controller = require(module.controllerPath)[`${module.name.charAt(0).toUpperCase() + module.name.slice(1)}Controller`];
+        const Controller = require(module.controllerPath)[
+          `${
+            module.name.charAt(0).toUpperCase() + module.name.slice(1)
+          }Controller`
+        ];
         if (Controller) controllers.push(Controller);
+        console.log(module.servicePath);
 
-        const serviceName = module.name === 'appointments' ? 'AppointmentService' : 
-                           module.name === 'patients' ? 'PatientService' :
-                           module.name === 'providers' ? 'ProviderService' :
-                           module.name === 'locations' ? 'LocationService' :
-                           module.name === 'concepts' ? 'ConceptService' :
-                           module.name === 'encounters' ? 'EncounterService' :
-                           module.name === 'observations' ? 'ObservationService' :
-                           module.name === 'visits' ? 'VisitService' :
-                           `${module.name.charAt(0).toUpperCase() + module.name.slice(1)}Service`;
-        const Service = require(module.servicePath)[serviceName];
+        const serviceModule = require(module.servicePath);
+        const Service = Object.values(serviceModule).find(
+          (exp: any) =>
+            typeof exp === "function" &&
+            exp.name &&
+            exp.name.endsWith("Service")
+        ) as any;
         if (Service) {
           providers.push({
             provide: `${module.name}Service`,
@@ -35,7 +37,7 @@ export class AppModule {
               registry.register(`${module.name}Service`, service);
               return service;
             },
-            inject: [PrismaService, ServiceRegistry]
+            inject: [PrismaService, ServiceRegistry],
           });
         }
       } catch (e) {
@@ -46,7 +48,7 @@ export class AppModule {
     return {
       module: AppModule,
       controllers: [AppController, ...controllers],
-      providers
+      providers,
     };
   }
 }

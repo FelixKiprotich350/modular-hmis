@@ -81,7 +81,7 @@ export async function register(ctx: ModuleContext) {
   ctx.app.use('/api/your-module', router);
 
   // Register services
-  const { YourService } = await import('./services/your-service');
+  const { YourService } = await import('./services/your.service');
   ctx.registerService('YourService', new YourService(ctx.db));
 
   // Register privileges

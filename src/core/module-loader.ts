@@ -1,44 +1,35 @@
-import { readdirSync, statSync } from 'fs';
-import { join } from 'path';
+import { readdirSync, statSync } from "fs";
+import { join } from "path";
 
 export interface ModuleInfo {
   name: string;
-  type: 'core' | 'custom';
+  type: "core" | "custom";
   servicePath: string;
   controllerPath: string;
 }
 
 export function discoverModules(): ModuleInfo[] {
   const modules: ModuleInfo[] = [];
-  const modulesPath = join(__dirname, '../modules');
-  
-  for (const type of ['core', 'custom']) {
+  const modulesPath = join(__dirname, "../modules");
+
+  for (const type of ["core", "custom"]) {
     const typePath = join(modulesPath, type);
     try {
       const moduleNames = readdirSync(typePath);
-      
+
       for (const name of moduleNames) {
         const modulePath = join(typePath, name);
         if (statSync(modulePath).isDirectory()) {
           modules.push({
             name,
-            type: type as 'core' | 'custom',
-            servicePath: join(modulePath, 'services', 
-              name === 'appointments' ? 'appointment-service' :
-              name === 'patients' ? 'patient-service' :
-              name === 'providers' ? 'provider-service' :
-              name === 'locations' ? 'location-service' :
-              name === 'concepts' ? 'concept-service' :
-              name === 'encounters' ? 'encounter-service' :
-              name === 'observations' ? 'observation-service' :
-              name === 'visits' ? 'visit-service' :
-              `${name}-service`),
-            controllerPath: join(modulePath, `${name}.controller`)
+            type: type as "core" | "custom",
+            servicePath: join(modulePath, "services", `${name}.service`),
+            controllerPath: join(modulePath, `${name}.controller`),
           });
         }
       }
     } catch (e) {}
   }
-  
+
   return modules;
 }

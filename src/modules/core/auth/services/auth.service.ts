@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import * as jwt from 'jsonwebtoken';
 import * as bcrypt from 'bcryptjs';
+import { AuditService } from '../../audit/services/audit.service';
 
 export interface LoginRequest {
   username: string;
@@ -25,10 +26,13 @@ export interface JwtPayload {
 export class AuthService {
   private readonly jwtSecret = process.env.JWT_SECRET || 'fallback-secret';
   private readonly jwtExpiry = '24h';
+  private auditService: AuditService;
 
-  constructor(private db: PrismaClient) {}
+  constructor(private db: PrismaClient) {
+    this.auditService = new AuditService(db);
+  }
 
-  async login(data: LoginRequest): Promise<AuthResponse | null> {
+  async login(data: LoginRequest, auditData?: { ip?: string; userAgent?: string }): Promise<AuthResponse | null> {
     const user = await this.db.user.findUnique({
       where: { username: data.username },
       include: {
@@ -39,6 +43,16 @@ export class AuthService {
     });
 
     if (!user || !await bcrypt.compare(data.password, user.password)) {
+      // Audit failed login attempt
+      if (auditData) {
+        await this.auditService.log({
+          action: 'LOGIN_FAILED',
+          resource: 'auth',
+          details: { username: data.username, reason: 'invalid_credentials' },
+          ipAddress: auditData.ip,
+          userAgent: auditData.userAgent
+        });
+      }
       return null;
     }
 
@@ -50,6 +64,18 @@ export class AuthService {
     };
 
     const token = jwt.sign(payload, this.jwtSecret, { expiresIn: this.jwtExpiry });
+
+    // Audit successful login
+    if (auditData) {
+      await this.auditService.log({
+        userId: user.id,
+        action: 'LOGIN_SUCCESS',
+        resource: 'auth',
+        details: { username: user.username, roles },
+        ipAddress: auditData.ip,
+        userAgent: auditData.userAgent
+      });
+    }
 
     return {
       token,

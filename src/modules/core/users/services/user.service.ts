@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { AuditService } from '../../audit/services/audit.service';
 
 export interface User {
   id: string;
@@ -18,9 +19,13 @@ export interface CreateUserRequest {
 }
 
 export class UserService {
-  constructor(private db: PrismaClient) {}
+  private auditService: AuditService;
 
-  async createUser(data: CreateUserRequest, tx?: any): Promise<User> {
+  constructor(private db: PrismaClient) {
+    this.auditService = new AuditService(db);
+  }
+
+  async createUser(data: CreateUserRequest, tx?: any, auditData?: { userId?: string; ip?: string }): Promise<User> {
     const db = tx || this.db;
     const hashedPassword = await bcrypt.hash(data.password, 10);
     
@@ -46,6 +51,18 @@ export class UserService {
         }
       }
     });
+
+    // Audit log
+    if (auditData) {
+      await this.auditService.log({
+        userId: auditData.userId,
+        action: 'CREATE_USER',
+        resource: 'users',
+        resourceId: user.id,
+        details: { username: data.username, email: data.email, roles: data.roles },
+        ipAddress: auditData.ip
+      }, tx);
+    }
 
     return {
       id: user.id,
@@ -152,9 +169,26 @@ export class UserService {
     };
   }
 
-  async deleteUser(id: string, tx?: any): Promise<boolean> {
+  async deleteUser(id: string, tx?: any, auditData?: { userId?: string; ip?: string }): Promise<boolean> {
     const db = tx || this.db;
+    
+    // Get user info before deletion for audit
+    const userToDelete = await db.user.findUnique({ where: { id } });
+    
     await db.user.delete({ where: { id } });
+    
+    // Audit log
+    if (auditData && userToDelete) {
+      await this.auditService.log({
+        userId: auditData.userId,
+        action: 'DELETE_USER',
+        resource: 'users',
+        resourceId: id,
+        details: { deletedUsername: userToDelete.username },
+        ipAddress: auditData.ip
+      }, tx);
+    }
+    
     return true;
   }
 

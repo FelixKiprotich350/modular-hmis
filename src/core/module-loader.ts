@@ -4,7 +4,7 @@ import { join } from "path";
 export interface ModuleInfo {
   name: string;
   type: "core" | "custom";
-  servicePath: string;
+  servicePaths: string[];
   controllerPath: string;
 }
 
@@ -20,10 +20,20 @@ export function discoverModules(): ModuleInfo[] {
       for (const name of moduleNames) {
         const modulePath = join(typePath, name);
         if (statSync(modulePath).isDirectory()) {
+          const servicesPath = join(modulePath, "services");
+          let servicePaths: string[] = [];
+          
+          try {
+            const serviceFiles = readdirSync(servicesPath);
+            servicePaths = serviceFiles
+              .filter(file => file.endsWith('.service.ts'))
+              .map(file => join(servicesPath, file));
+          } catch (e) {}
+          
           modules.push({
             name,
             type: type as "core" | "custom",
-            servicePath: join(modulePath, "services", `${name}.service`),
+            servicePaths,
             controllerPath: join(modulePath, `${name}.controller`),
           });
         }

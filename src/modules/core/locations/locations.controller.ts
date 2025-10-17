@@ -1,17 +1,44 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { AuthGuard } from '../../../core/guards/auth.guard';
+import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
+import { Privileges } from '../../../core/decorators/privileges.decorator';
+
+
+class CreateLocationDto {
+  name: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  phone?: string;
+}
+
+class UpdateLocationDto {
+  name?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  phone?: string;
+}
 
 @ApiTags('Locations')
 @Controller('api/locations')
+@UseGuards(AuthGuard, PrivilegeGuard)
+@ApiBearerAuth()
 export class LocationsController {
   @Post()
-  @ApiOperation({ summary: 'Create locations' })
-  @ApiResponse({ status: 201, description: 'Locations created' })
-  create(@Body() createDto: any) {
-    return { message: 'Locations created', data: createDto };
+  @Privileges('manage_locations')
+  @ApiOperation({ summary: 'Create location' })
+  @ApiResponse({ status: 201, description: 'Location created' })
+  @ApiBody({ type: CreateLocationDto })
+  create(@Body() createDto: CreateLocationDto) {
+    return { message: 'Location created', data: createDto };
   }
 
   @Get()
+  @Privileges('manage_locations')
   @ApiOperation({ summary: 'Get all locations' })
   @ApiResponse({ status: 200, description: 'List of locations' })
   findAll() {
@@ -19,20 +46,24 @@ export class LocationsController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get locations by ID' })
+  @Privileges('manage_locations')
+  @ApiOperation({ summary: 'Get location by ID' })
   findOne(@Param('id') id: string) {
-    return { message: `Locations ${id}`, data: null };
+    return { message: `Location ${id}`, data: null };
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update locations' })
-  update(@Param('id') id: string, @Body() updateDto: any) {
-    return { message: `Locations ${id} updated`, data: updateDto };
+  @Privileges('manage_locations')
+  @ApiOperation({ summary: 'Update location' })
+  @ApiBody({ type: UpdateLocationDto })
+  update(@Param('id') id: string, @Body() updateDto: UpdateLocationDto) {
+    return { message: `Location ${id} updated`, data: updateDto };
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete locations' })
+  @Privileges('manage_locations')
+  @ApiOperation({ summary: 'Delete location' })
   remove(@Param('id') id: string) {
-    return { message: `Locations ${id} deleted` };
+    return { message: `Location ${id} deleted` };
   }
 }

@@ -17,7 +17,33 @@ async function main() {
     'edit_encounters',
     'view_appointments',
     'create_appointments',
-    'edit_appointments'
+    'edit_appointments',
+    'manage_concepts',
+    'view_lab_results',
+    'create_lab_orders',
+    'manage_locations',
+    'view_observations',
+    'create_observations',
+    'manage_providers',
+    'view_radiology',
+    'create_radiology_orders',
+    'manage_settings',
+    'view_visits',
+    'create_visits',
+    'manage_billing',
+    'view_billing',
+    'manage_insurance',
+    'view_insurance',
+    'manage_inventory',
+    'view_inventory',
+    'manage_mobile_clinic',
+    'view_mobile_clinic',
+    'manage_pharmacy',
+    'view_pharmacy',
+    'view_reports',
+    'generate_reports',
+    'manage_telemedicine',
+    'view_telemedicine'
   ];
 
   for (const privilegeName of privileges) {
@@ -66,7 +92,18 @@ async function main() {
   }
 
   // Assign privileges to doctor role
-  const doctorPrivileges = ['view_patients', 'create_patients', 'edit_patients', 'view_encounters', 'create_encounters', 'edit_encounters'];
+  const doctorPrivileges = [
+    'view_patients', 'create_patients', 'edit_patients', 
+    'view_encounters', 'create_encounters', 'edit_encounters',
+    'view_appointments', 'create_appointments', 'edit_appointments',
+    'view_lab_results', 'create_lab_orders',
+    'view_observations', 'create_observations',
+    'view_radiology', 'create_radiology_orders',
+    'view_visits', 'create_visits',
+    'manage_billing', 'view_billing',
+    'manage_pharmacy', 'view_pharmacy',
+    'view_reports'
+  ];
   for (const privilegeName of doctorPrivileges) {
     const privilege = await prisma.privilege.findUnique({ where: { name: privilegeName } });
     if (privilege) {
@@ -87,7 +124,15 @@ async function main() {
   }
 
   // Assign privileges to nurse role
-  const nursePrivileges = ['view_patients', 'view_encounters', 'view_appointments', 'create_appointments', 'edit_appointments'];
+  const nursePrivileges = [
+    'view_patients', 'view_encounters', 
+    'view_appointments', 'create_appointments', 'edit_appointments',
+    'view_observations', 'create_observations',
+    'view_visits',
+    'view_billing',
+    'view_inventory',
+    'view_pharmacy'
+  ];
   for (const privilegeName of nursePrivileges) {
     const privilege = await prisma.privilege.findUnique({ where: { name: privilegeName } });
     if (privilege) {

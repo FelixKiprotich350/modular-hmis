@@ -1,17 +1,46 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { AuthGuard } from '../../../core/guards/auth.guard';
+import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
+import { Privileges } from '../../../core/decorators/privileges.decorator';
+
+
+class CreateReportDto {
+  reportType: string;
+  title: string;
+  dateRange: {
+    startDate: string;
+    endDate: string;
+  };
+  filters?: any;
+}
+
+class UpdateReportDto {
+  title?: string;
+  dateRange?: {
+    startDate: string;
+    endDate: string;
+  };
+  filters?: any;
+  status?: string;
+}
 
 @ApiTags('Reports')
 @Controller('api/reports')
+@UseGuards(AuthGuard, PrivilegeGuard)
+@ApiBearerAuth()
 export class ReportsController {
   @Post()
-  @ApiOperation({ summary: 'Create reports' })
-  @ApiResponse({ status: 201, description: 'Reports created' })
-  create(@Body() createDto: any) {
-    return { message: 'Reports created', data: createDto };
+  @Privileges('generate_reports')
+  @ApiOperation({ summary: 'Generate report' })
+  @ApiResponse({ status: 201, description: 'Report generated' })
+  @ApiBody({ type: CreateReportDto })
+  create(@Body() createDto: CreateReportDto) {
+    return { message: 'Report generated', data: createDto };
   }
 
   @Get()
+  @Privileges('view_reports')
   @ApiOperation({ summary: 'Get all reports' })
   @ApiResponse({ status: 200, description: 'List of reports' })
   findAll() {
@@ -19,20 +48,24 @@ export class ReportsController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get reports by ID' })
+  @Privileges('view_reports')
+  @ApiOperation({ summary: 'Get report by ID' })
   findOne(@Param('id') id: string) {
-    return { message: `Reports ${id}`, data: null };
+    return { message: `Report ${id}`, data: null };
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update reports' })
-  update(@Param('id') id: string, @Body() updateDto: any) {
-    return { message: `Reports ${id} updated`, data: updateDto };
+  @Privileges('generate_reports')
+  @ApiOperation({ summary: 'Update report' })
+  @ApiBody({ type: UpdateReportDto })
+  update(@Param('id') id: string, @Body() updateDto: UpdateReportDto) {
+    return { message: `Report ${id} updated`, data: updateDto };
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete reports' })
+  @Privileges('generate_reports')
+  @ApiOperation({ summary: 'Delete report' })
   remove(@Param('id') id: string) {
-    return { message: `Reports ${id} deleted` };
+    return { message: `Report ${id} deleted` };
   }
 }

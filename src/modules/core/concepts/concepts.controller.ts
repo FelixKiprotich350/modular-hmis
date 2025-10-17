@@ -1,17 +1,42 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { AuthGuard } from '../../../core/guards/auth.guard';
+import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
+import { Privileges } from '../../../core/decorators/privileges.decorator';
+
+
+class CreateConceptDto {
+  name: string;
+  datatype: string;
+  conceptClass: string;
+  description?: string;
+  units?: string;
+}
+
+class UpdateConceptDto {
+  name?: string;
+  datatype?: string;
+  conceptClass?: string;
+  description?: string;
+  units?: string;
+}
 
 @ApiTags('Concepts')
 @Controller('api/concepts')
+@UseGuards(AuthGuard, PrivilegeGuard)
+@ApiBearerAuth()
 export class ConceptsController {
   @Post()
-  @ApiOperation({ summary: 'Create concepts' })
-  @ApiResponse({ status: 201, description: 'Concepts created' })
-  create(@Body() createDto: any) {
-    return { message: 'Concepts created', data: createDto };
+  @Privileges('manage_concepts')
+  @ApiOperation({ summary: 'Create concept' })
+  @ApiResponse({ status: 201, description: 'Concept created' })
+  @ApiBody({ type: CreateConceptDto })
+  create(@Body() createDto: CreateConceptDto) {
+    return { message: 'Concept created', data: createDto };
   }
 
   @Get()
+  @Privileges('manage_concepts')
   @ApiOperation({ summary: 'Get all concepts' })
   @ApiResponse({ status: 200, description: 'List of concepts' })
   findAll() {
@@ -19,20 +44,24 @@ export class ConceptsController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get concepts by ID' })
+  @Privileges('manage_concepts')
+  @ApiOperation({ summary: 'Get concept by ID' })
   findOne(@Param('id') id: string) {
-    return { message: `Concepts ${id}`, data: null };
+    return { message: `Concept ${id}`, data: null };
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update concepts' })
-  update(@Param('id') id: string, @Body() updateDto: any) {
-    return { message: `Concepts ${id} updated`, data: updateDto };
+  @Privileges('manage_concepts')
+  @ApiOperation({ summary: 'Update concept' })
+  @ApiBody({ type: UpdateConceptDto })
+  update(@Param('id') id: string, @Body() updateDto: UpdateConceptDto) {
+    return { message: `Concept ${id} updated`, data: updateDto };
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete concepts' })
+  @Privileges('manage_concepts')
+  @ApiOperation({ summary: 'Delete concept' })
   remove(@Param('id') id: string) {
-    return { message: `Concepts ${id} deleted` };
+    return { message: `Concept ${id} deleted` };
   }
 }

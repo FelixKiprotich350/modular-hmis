@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Headers, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, Headers, UseGuards, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { AuditService } from './services/audit.service';
 import { PrismaService } from '../../../core/prisma.service';
@@ -56,5 +56,43 @@ export class AuditController {
   async getRecentLogs() {
     const logs = await this.auditService.getLogs(undefined, undefined, 50);
     return { message: 'Recent audit logs', logs, count: logs.length };
+  }
+
+  @Get('security')
+  @Privileges('manage_users')
+  @ApiOperation({ summary: 'Get security-related audit logs' })
+  async getSecurityLogs() {
+    const logs = await this.auditService.getSecurityLogs();
+    return { message: 'Security audit logs', logs, count: logs.length };
+  }
+
+  @Get('failed-operations')
+  @Privileges('manage_users')
+  @ApiOperation({ summary: 'Get failed operations audit logs' })
+  async getFailedOperations() {
+    const logs = await this.auditService.getFailedOperations();
+    return { message: 'Failed operations audit logs', logs, count: logs.length };
+  }
+
+  @Get('resource/:resource')
+  @Privileges('manage_users')
+  @ApiOperation({ summary: 'Get audit logs for specific resource' })
+  async getResourceLogs(
+    @Param('resource') resource: string,
+    @Query('resourceId') resourceId?: string
+  ) {
+    const logs = await this.auditService.getResourceActivity(resource, resourceId);
+    return { message: `Audit logs for ${resource}`, logs, count: logs.length };
+  }
+
+  @Get('summary/:userId')
+  @Privileges('manage_users')
+  @ApiOperation({ summary: 'Get user activity summary' })
+  async getUserSummary(
+    @Param('userId') userId: string,
+    @Query('days') days?: string
+  ) {
+    const summary = await this.auditService.getUserActivitySummary(userId, days ? parseInt(days) : 30);
+    return { message: 'User activity summary', summary };
   }
 }

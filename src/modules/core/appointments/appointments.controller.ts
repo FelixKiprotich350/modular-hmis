@@ -1,17 +1,40 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { AuthGuard } from '../../../core/guards/auth.guard';
+import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
+import { Privileges } from '../../../core/decorators/privileges.decorator';
+
+class CreateAppointmentDto {
+  patientId: string;
+  providerId: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  reason?: string;
+}
+
+class UpdateAppointmentDto {
+  appointmentDate?: string;
+  appointmentTime?: string;
+  reason?: string;
+  status?: string;
+}
 
 @ApiTags('Appointments')
 @Controller('api/appointments')
+@UseGuards(AuthGuard, PrivilegeGuard)
+@ApiBearerAuth()
 export class AppointmentsController {
   @Post()
-  @ApiOperation({ summary: 'Create appointments' })
-  @ApiResponse({ status: 201, description: 'Appointments created' })
-  create(@Body() createDto: any) {
-    return { message: 'Appointments created', data: createDto };
+  @Privileges('create_appointments')
+  @ApiOperation({ summary: 'Create appointment' })
+  @ApiResponse({ status: 201, description: 'Appointment created' })
+  @ApiBody({ type: CreateAppointmentDto })
+  create(@Body() createDto: CreateAppointmentDto) {
+    return { message: 'Appointment created', data: createDto };
   }
 
   @Get()
+  @Privileges('view_appointments')
   @ApiOperation({ summary: 'Get all appointments' })
   @ApiResponse({ status: 200, description: 'List of appointments' })
   findAll() {
@@ -19,20 +42,24 @@ export class AppointmentsController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get appointments by ID' })
+  @Privileges('view_appointments')
+  @ApiOperation({ summary: 'Get appointment by ID' })
   findOne(@Param('id') id: string) {
-    return { message: `Appointments ${id}`, data: null };
+    return { message: `Appointment ${id}`, data: null };
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update appointments' })
-  update(@Param('id') id: string, @Body() updateDto: any) {
-    return { message: `Appointments ${id} updated`, data: updateDto };
+  @Privileges('edit_appointments')
+  @ApiOperation({ summary: 'Update appointment' })
+  @ApiBody({ type: UpdateAppointmentDto })
+  update(@Param('id') id: string, @Body() updateDto: UpdateAppointmentDto) {
+    return { message: `Appointment ${id} updated`, data: updateDto };
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete appointments' })
+  @Privileges('edit_appointments')
+  @ApiOperation({ summary: 'Delete appointment' })
   remove(@Param('id') id: string) {
-    return { message: `Appointments ${id} deleted` };
+    return { message: `Appointment ${id} deleted` };
   }
 }

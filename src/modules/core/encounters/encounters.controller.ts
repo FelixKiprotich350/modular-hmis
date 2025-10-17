@@ -1,17 +1,40 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { AuthGuard } from '../../../core/guards/auth.guard';
+import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
+import { Privileges } from '../../../core/decorators/privileges.decorator';
+
+class CreateEncounterDto {
+  patientId: string;
+  providerId: string;
+  encounterType: string;
+  chiefComplaint?: string;
+  notes?: string;
+}
+
+class UpdateEncounterDto {
+  encounterType?: string;
+  chiefComplaint?: string;
+  notes?: string;
+  status?: string;
+}
 
 @ApiTags('Encounters')
 @Controller('api/encounters')
+@UseGuards(AuthGuard, PrivilegeGuard)
+@ApiBearerAuth()
 export class EncountersController {
   @Post()
-  @ApiOperation({ summary: 'Create encounters' })
-  @ApiResponse({ status: 201, description: 'Encounters created' })
-  create(@Body() createDto: any) {
-    return { message: 'Encounters created', data: createDto };
+  @Privileges('create_encounters')
+  @ApiOperation({ summary: 'Create encounter' })
+  @ApiResponse({ status: 201, description: 'Encounter created' })
+  @ApiBody({ type: CreateEncounterDto })
+  create(@Body() createDto: CreateEncounterDto) {
+    return { message: 'Encounter created', data: createDto };
   }
 
   @Get()
+  @Privileges('view_encounters')
   @ApiOperation({ summary: 'Get all encounters' })
   @ApiResponse({ status: 200, description: 'List of encounters' })
   findAll() {
@@ -19,20 +42,24 @@ export class EncountersController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get encounters by ID' })
+  @Privileges('view_encounters')
+  @ApiOperation({ summary: 'Get encounter by ID' })
   findOne(@Param('id') id: string) {
-    return { message: `Encounters ${id}`, data: null };
+    return { message: `Encounter ${id}`, data: null };
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update encounters' })
-  update(@Param('id') id: string, @Body() updateDto: any) {
-    return { message: `Encounters ${id} updated`, data: updateDto };
+  @Privileges('edit_encounters')
+  @ApiOperation({ summary: 'Update encounter' })
+  @ApiBody({ type: UpdateEncounterDto })
+  update(@Param('id') id: string, @Body() updateDto: UpdateEncounterDto) {
+    return { message: `Encounter ${id} updated`, data: updateDto };
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete encounters' })
+  @Privileges('edit_encounters')
+  @ApiOperation({ summary: 'Delete encounter' })
   remove(@Param('id') id: string) {
-    return { message: `Encounters ${id} deleted` };
+    return { message: `Encounter ${id} deleted` };
   }
 }

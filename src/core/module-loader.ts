@@ -23,7 +23,16 @@ export function discoverModules(): ModuleInfo[] {
           modules.push({
             name,
             type: type as 'core' | 'custom',
-            servicePath: join(modulePath, 'services', `${name}-service`),
+            servicePath: join(modulePath, 'services', 
+              name === 'appointments' ? 'appointment-service' :
+              name === 'patients' ? 'patient-service' :
+              name === 'providers' ? 'provider-service' :
+              name === 'locations' ? 'location-service' :
+              name === 'concepts' ? 'concept-service' :
+              name === 'encounters' ? 'encounter-service' :
+              name === 'observations' ? 'observation-service' :
+              name === 'visits' ? 'visit-service' :
+              `${name}-service`),
             controllerPath: join(modulePath, `${name}.controller`)
           });
         }

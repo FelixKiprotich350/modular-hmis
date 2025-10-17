@@ -1,21 +1,18 @@
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
 export class ServiceRegistry {
   private services = new Map<string, any>();
 
-  register(name: string, impl: any) {
-    this.services.set(name, impl);
+  register<T>(name: string, service: T): void {
+    this.services.set(name, service);
   }
 
-  get(name: string) {
-    return this.services.get(name);
+  get<T>(name: string): T | undefined {
+    return this.services.get(name) as T;
   }
 
   has(name: string): boolean {
     return this.services.has(name);
   }
-
-  list(): string[] {
-    return Array.from(this.services.keys());
-  }
 }
-
-export const serviceRegistry = new ServiceRegistry();

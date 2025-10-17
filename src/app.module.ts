@@ -1,38 +1,43 @@
-import { Module } from "@nestjs/common";
-import { AppController } from "./app.controller";
-import { AppService } from "./app.service";
-import { PrismaService } from "./core/prisma.service";
-import { ServiceRegistry } from "./core/service-registry";
+import { Module, DynamicModule, Provider } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { PrismaService } from './core/prisma.service';
+import { ServiceRegistry } from './core/service-registry';
+import { discoverModules } from './core/module-loader';
 
-// Import all module controllers
-import { PatientsController } from "./patients/patients.controller";
-import { AppointmentsController } from "./appointments/appointments.controller";
-import { ProvidersController } from "./providers/providers.controller";
-import { LocationsController } from "./locations/locations.controller";
+@Module({})
+export class AppModule {
+  static forRoot(): DynamicModule {
+    const modules = discoverModules();
+    const controllers = [];
+    const providers: Provider[] = [AppService, PrismaService, ServiceRegistry];
 
-// Import all services
-import { PatientService } from "./patients/services/patient-service";
-import { AppointmentService } from "./appointments/services/appointment-service";
-import { ProviderService } from "./providers/services/provider-service";
-import { LocationService } from "./locations/services/location-service";
+    for (const module of modules) {
+      try {
+        const Controller = require(module.controllerPath)[`${module.name.charAt(0).toUpperCase() + module.name.slice(1)}Controller`];
+        if (Controller) controllers.push(Controller);
 
-@Module({
-  imports: [],
-  controllers: [
-    AppController,
-    PatientsController,
-    AppointmentsController,
-    ProvidersController,
-    LocationsController,
-  ],
-  providers: [
-    AppService,
-    PrismaService,
-    ServiceRegistry,
-    PatientService,
-    AppointmentService,
-    ProviderService,
-    LocationService,
-  ],
-})
-export class AppModule {}
+        const Service = require(module.servicePath)[`${module.name.charAt(0).toUpperCase() + module.name.slice(1)}Service`];
+        if (Service) {
+          providers.push({
+            provide: `${module.name}Service`,
+            useFactory: (db: PrismaService, registry: ServiceRegistry) => {
+              const service = new Service(db, registry);
+              registry.register(`${module.name}Service`, service);
+              return service;
+            },
+            inject: [PrismaService, ServiceRegistry]
+          });
+        }
+      } catch (e) {
+        console.warn(`Failed to load module ${module.name}:`, e.message);
+      }
+    }
+
+    return {
+      module: AppModule,
+      controllers: [AppController, ...controllers],
+      providers
+    };
+  }
+}

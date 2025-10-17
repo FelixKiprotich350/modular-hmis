@@ -1,4 +1,6 @@
 import { PrismaClient } from '@prisma/client';
+import { Injectable } from '@nestjs/common';
+import { ServiceRegistry } from '../../../../core/service-registry';
 
 export interface Prescription {
   id: string;
@@ -24,27 +26,15 @@ export interface Medication {
   updatedAt: Date;
 }
 
+@Injectable()
 export class PharmacyService {
-  constructor(private db: PrismaClient) {}
-
-  async createPrescription(data: Omit<Prescription, 'id' | 'createdAt' | 'updatedAt'>): Promise<Prescription> {
-    return {
-      id: 'prescription_' + Date.now(),
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-  }
-
-  async getPrescriptions(): Promise<Prescription[]> {
-    return [];
-  }
-
-  async getMedications(): Promise<Medication[]> {
-    return [];
-  }
+  constructor(
+    private db: PrismaClient,
+    private serviceRegistry?: ServiceRegistry
+  ) {}
 
   async dispenseMedication(prescriptionId: string): Promise<boolean> {
+    console.log(`Dispensing medication for prescription: ${prescriptionId}`);
     return true;
   }
 }

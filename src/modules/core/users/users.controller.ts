@@ -1,7 +1,23 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, HttpException, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { UserService } from './services/user.service';
 import { PrismaService } from '../../../core/prisma.service';
+
+class CreateUserDto {
+  username: string;
+  email: string;
+  password: string;
+  roles?: string[];
+}
+
+class UpdateUserDto {
+  username?: string;
+  email?: string;
+}
+
+class AssignRoleDto {
+  role: string;
+}
 
 @ApiTags('Users')
 @Controller('api/users')
@@ -16,7 +32,8 @@ export class UsersController {
   @ApiOperation({ summary: 'Create user' })
   @ApiResponse({ status: 201, description: 'User created' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
-  async create(@Body() createUserDto: any) {
+  @ApiBody({ type: CreateUserDto })
+  async create(@Body() createUserDto: CreateUserDto) {
     if (!createUserDto.username || !createUserDto.email || !createUserDto.password) {
       throw new HttpException('Username, email, and password are required', HttpStatus.BAD_REQUEST);
     }
@@ -53,7 +70,8 @@ export class UsersController {
   @ApiOperation({ summary: 'Update user' })
   @ApiResponse({ status: 200, description: 'User updated' })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async update(@Param('id') id: string, @Body() updateUserDto: any) {
+  @ApiBody({ type: UpdateUserDto })
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     try {
       const user = await this.userService.updateUser(id, updateUserDto);
       return { message: `User ${id} updated`, user };
@@ -77,7 +95,8 @@ export class UsersController {
   @Post(':id/roles')
   @ApiOperation({ summary: 'Assign role to user' })
   @ApiResponse({ status: 200, description: 'Role assigned' })
-  async assignRole(@Param('id') id: string, @Body() roleDto: { role: string }) {
+  @ApiBody({ type: AssignRoleDto })
+  async assignRole(@Param('id') id: string, @Body() roleDto: AssignRoleDto) {
     const success = await this.userService.assignRole(id, roleDto.role);
     if (!success) {
       throw new HttpException('Failed to assign role', HttpStatus.BAD_REQUEST);

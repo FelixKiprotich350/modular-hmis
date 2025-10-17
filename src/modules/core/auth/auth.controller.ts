@@ -1,7 +1,12 @@
 import { Controller, Post, Body, Get, Headers, HttpException, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiHeader } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiHeader, ApiBody } from '@nestjs/swagger';
 import { AuthService } from './services/auth.service';
 import { PrismaService } from '../../../core/prisma.service';
+
+class LoginDto {
+  username: string;
+  password: string;
+}
 
 @ApiTags('Auth')
 @Controller('api/auth')
@@ -16,7 +21,8 @@ export class AuthController {
   @ApiOperation({ summary: 'User login' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  async login(@Body() loginDto: { username: string; password: string }) {
+  @ApiBody({ type: LoginDto })
+  async login(@Body() loginDto: LoginDto) {
     const result = await this.authService.login(loginDto);
     if (!result) {
       throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);

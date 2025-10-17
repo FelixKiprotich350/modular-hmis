@@ -1,7 +1,20 @@
 import { Controller, Get, Post, Body, Param, Delete, HttpException, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { RoleprivilegeService } from './services/roleprivilege.service';
 import { PrismaService } from '../../../core/prisma.service';
+
+class CreateRoleDto {
+  name: string;
+}
+
+class CreatePrivilegeDto {
+  name: string;
+}
+
+class CheckPermissionDto {
+  userId: string;
+  privilegeName: string;
+}
 
 @ApiTags('Role Privileges')
 @Controller('api/roleprivileges')
@@ -24,7 +37,8 @@ export class RoleprivilegesController {
   @ApiOperation({ summary: 'Create role' })
   @ApiResponse({ status: 201, description: 'Role created' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
-  async createRole(@Body() createRoleDto: { name: string }) {
+  @ApiBody({ type: CreateRoleDto })
+  async createRole(@Body() createRoleDto: CreateRoleDto) {
     if (!createRoleDto.name) {
       throw new HttpException('Role name is required', HttpStatus.BAD_REQUEST);
     }
@@ -45,7 +59,8 @@ export class RoleprivilegesController {
   @ApiOperation({ summary: 'Create privilege' })
   @ApiResponse({ status: 201, description: 'Privilege created' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
-  async createPrivilege(@Body() createPrivilegeDto: { name: string }) {
+  @ApiBody({ type: CreatePrivilegeDto })
+  async createPrivilege(@Body() createPrivilegeDto: CreatePrivilegeDto) {
     if (!createPrivilegeDto.name) {
       throw new HttpException('Name is required', HttpStatus.BAD_REQUEST);
     }
@@ -81,7 +96,8 @@ export class RoleprivilegesController {
   @Post('check-permission')
   @ApiOperation({ summary: 'Check user permission' })
   @ApiResponse({ status: 200, description: 'Permission check result' })
-  async checkPermission(@Body() permissionDto: { userId: string; privilegeName: string }) {
+  @ApiBody({ type: CheckPermissionDto })
+  async checkPermission(@Body() permissionDto: CheckPermissionDto) {
     const hasPermission = await this.rolePrivilegeService.checkPermission(
       permissionDto.userId, 
       permissionDto.privilegeName

@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, Put, Query, Inject } from '@nestjs/
 import { RadiologyService } from './services/radiology.service';
 import { Radiology } from './models/radiology.model';
 
-@Controller('api/radiology')
+@Controller({ path: 'radiology', version: '1' })
 export class RadiologyController {
   constructor(@Inject('radiologyService') private readonly radiologyService: RadiologyService) {}
 

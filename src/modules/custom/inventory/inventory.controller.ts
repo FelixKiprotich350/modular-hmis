@@ -10,7 +10,7 @@ import { CreateInventoryDto } from './dto/create-inventory.dto';
 import { UpdateInventoryDto } from './dto/update-inventory.dto';
 
 @ApiTags('Inventory')
-@Controller('api/inventory')
+@Controller({ path: 'inventory', version: '1' })
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class InventoryController {

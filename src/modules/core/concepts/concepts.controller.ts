@@ -25,7 +25,7 @@ class UpdateConceptDto {
 }
 
 @ApiTags('Concepts')
-@Controller('api/concepts')
+@Controller({ path: 'concepts', version: '1' })
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class ConceptsController {

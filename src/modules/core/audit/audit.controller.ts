@@ -8,7 +8,7 @@ import { Privileges } from '../../../core/decorators/privileges.decorator';
 import { User } from '../../../core/decorators/user.decorator';
 
 @ApiTags('Audit')
-@Controller('api/audit')
+@Controller({ path: 'audit', version: '1' })
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class AuditController {

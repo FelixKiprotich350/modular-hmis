@@ -25,7 +25,7 @@ import { User } from "../../../core/decorators/user.decorator";
 import { LoginDto } from './dto/login.dto';
 
 @ApiTags("Auth")
-@Controller("api/auth")
+@Controller({ path: 'auth', version: '1' })
 export class AuthController {
   private authService: AuthService;
 

@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, Put, Delete, Query, Inject } from '
 import { MetadataSharingService } from './services/metadata-sharing.service';
 import { MetadataPackage, MetadataSharing } from './models/metadata.model';
 
-@Controller('api/metadata-sharing')
+@Controller({ path: 'metadata-sharing', version: '1' })
 export class MetadataSharingController {
   constructor(@Inject('metadataSharingService') private readonly metadataSharingService: MetadataSharingService) {}
 

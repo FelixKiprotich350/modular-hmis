@@ -9,7 +9,7 @@ import { CreateBillingDto } from './dto/create-billing.dto';
 import { UpdateBillingDto } from './dto/update-billing.dto';
 
 @ApiTags('Billing')
-@Controller('api/billing')
+@Controller({ path: 'billing', version: '1' })
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class BillingController {

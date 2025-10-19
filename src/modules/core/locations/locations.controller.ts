@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, Put, Delete, Query, Inject } from '
 import { LocationService } from './services/locations.service';
 import { Location } from './models/location.model';
 
-@Controller('api/locations')
+@Controller({ path: 'locations', version: '1' })
 export class LocationsController {
   constructor(@Inject('locationsService') private readonly locationsService: LocationService) {}
 

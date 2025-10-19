@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, Put, Delete, Query, Inject } from '
 import { DrugService } from './services/drug.service';
 import { Drug, DrugOrder } from './models/drug.model';
 
-@Controller('api/drugs')
+@Controller({ path: 'drugs', version: '1' })
 export class DrugController {
   constructor(@Inject('drugService') private readonly drugService: DrugService) {}
 

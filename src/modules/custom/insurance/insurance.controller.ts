@@ -20,7 +20,7 @@ class UpdateInsuranceDto {
 }
 
 @ApiTags('Insurance')
-@Controller('api/insurance')
+@Controller({ path: 'insurance', version: '1' })
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class InsuranceController {

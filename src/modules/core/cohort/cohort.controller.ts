@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, Put, Delete, Query, Inject } from '
 import { CohortService } from './services/cohort.service';
 import { Cohort, CohortDefinition } from './models/cohort.model';
 
-@Controller('api/cohorts')
+@Controller({ path: 'cohorts', version: '1' })
 export class CohortController {
   constructor(@Inject('cohortService') private readonly cohortService: CohortService) {}
 

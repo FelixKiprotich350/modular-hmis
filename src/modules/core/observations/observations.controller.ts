@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, Put, Query, Delete, Inject } from '
 import { ObservationService } from './services/observations.service';
 import { Observation } from './models/observation.model';
 
-@Controller('api/observations')
+@Controller({ path: 'observations', version: '1' })
 export class ObservationsController {
   constructor(@Inject('observationsService') private readonly observationsService: ObservationService) {}
 

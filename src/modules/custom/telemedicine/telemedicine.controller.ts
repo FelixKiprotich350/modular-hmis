@@ -23,7 +23,7 @@ class UpdateTelemedicineDto {
 }
 
 @ApiTags('Telemedicine')
-@Controller('api/telemedicine')
+@Controller({ path: 'telemedicine', version: '1' })
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class TelemedicineController {

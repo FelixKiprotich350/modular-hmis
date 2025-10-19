@@ -12,7 +12,7 @@ import { AssignRoleDto } from './dto/assign-role.dto';
 import { CreateUserWithRolesDto } from './dto/create-user-with-roles.dto';
 
 @ApiTags('Users')
-@Controller('api/users')
+@Controller({ path: 'users', version: '1' })
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class UsersController {

@@ -24,7 +24,7 @@ class UpdateProviderDto {
 }
 
 @ApiTags('Providers')
-@Controller('api/providers')
+@Controller({ path: 'providers', version: '1' })
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class ProvidersController {

@@ -19,7 +19,7 @@ class UpdateSettingDto {
 }
 
 @ApiTags('Settings')
-@Controller('api/settings')
+@Controller({ path: 'settings', version: '1' })
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class SettingsController {

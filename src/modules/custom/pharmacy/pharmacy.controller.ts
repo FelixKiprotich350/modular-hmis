@@ -10,7 +10,7 @@ import { CreatePharmacyDto } from './dto/create-pharmacy.dto';
 import { UpdatePharmacyDto } from './dto/update-pharmacy.dto';
 
 @ApiTags('Pharmacy')
-@Controller('api/pharmacy')
+@Controller({ path: 'pharmacy', version: '1' })
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class PharmacyController {

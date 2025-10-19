@@ -26,7 +26,7 @@ class UpdateReportDto {
 }
 
 @ApiTags('Reports')
-@Controller('api/reports')
+@Controller({ path: 'reports', version: '1' })
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class ReportsController {

@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, Put, Delete, Query, Inject } from '
 import { DataExchangeService } from './services/data-exchange.service';
 import { DataExport, DataImport, ETLJob } from './models/data-exchange.model';
 
-@Controller('api/data-exchange')
+@Controller({ path: 'data-exchange', version: '1' })
 export class DataExchangeController {
   constructor(@Inject('dataExchangeService') private readonly dataExchangeService: DataExchangeService) {}
 

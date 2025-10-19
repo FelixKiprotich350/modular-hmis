@@ -12,7 +12,7 @@ import { CheckPermissionDto } from './dto/check-permission.dto';
 import { CreateRoleWithPrivilegesDto } from './dto/create-role-with-privileges.dto';
 
 @ApiTags('Role Privileges')
-@Controller('api/roleprivileges')
+@Controller({ path: 'roleprivileges', version: '1' })
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class RoleprivilegesController {

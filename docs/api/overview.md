@@ -197,20 +197,35 @@ Cross-Origin Resource Sharing (CORS) is enabled for:
 
 ## API Versioning
 
-The API uses URL versioning:
-- Current version: `v1` (default)
-- Future versions: `v2`, `v3`, etc.
+The API uses URL versioning with `/api/v{version}` format:
+- **Current version**: `v1` (default)
+- **Available versions**: `v1`, `v2`
+- **Default**: If no version specified, `v1` is used
 
 ```bash
-# Current (default)
-GET /api/patients
-
-# Explicit version
+# Version 1 (default)
 GET /api/v1/patients
 
-# Future version
+# Version 2 (enhanced features)
 GET /api/v2/patients
+
+# Without version (defaults to v1)
+GET /api/patients  # Redirects to /api/v1/patients
 ```
+
+### Version Differences
+
+**V1 Features:**
+- Basic CRUD operations
+- Simple response format
+- Standard error handling
+
+**V2 Features:**
+- Enhanced pagination with metadata
+- Computed fields (age, fullName)
+- Enriched response format
+- Additional validation
+- QR code generation
 
 ## WebSocket Support
 

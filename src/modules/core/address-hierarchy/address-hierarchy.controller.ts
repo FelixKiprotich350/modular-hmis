@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, Put, Query, Inject } from '@nestjs/
 import { AddressHierarchyService } from './services/address-hierarchy.service';
 import { AddressHierarchyLevel, AddressHierarchyEntry, PersonAddress } from './models/address-hierarchy.model';
 
-@Controller('api/address-hierarchy')
+@Controller({ path: 'address-hierarchy', version: '1' })
 export class AddressHierarchyController {
   constructor(@Inject('addressHierarchyService') private readonly addressHierarchyService: AddressHierarchyService) {}
 

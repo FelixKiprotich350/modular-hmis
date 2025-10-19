@@ -22,7 +22,7 @@ class UpdateMobileClinicDto {
 }
 
 @ApiTags('MobileClinic')
-@Controller('api/mobile-clinic')
+@Controller({ path: 'mobile-clinic', version: '1' })
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class MobileClinicController {

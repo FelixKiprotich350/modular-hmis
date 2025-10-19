@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, Put, Delete, Query, Inject } from '
 import { FormService } from './services/form.service';
 import { Form } from './models/form.model';
 
-@Controller('api/forms')
+@Controller({ path: 'forms', version: '1' })
 export class FormController {
   constructor(@Inject('formService') private readonly formService: FormService) {}
 

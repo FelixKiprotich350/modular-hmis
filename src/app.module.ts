@@ -36,6 +36,18 @@ export class AppModule {
           }Controller`
         ];
         if (Controller) controllers.push(Controller);
+        
+        // Check for V2 controller
+        try {
+          const V2Controller = require(module.controllerPath.replace('.controller.ts', '-v2.controller.ts'))[
+            `${
+              module.name.charAt(0).toUpperCase() + module.name.slice(1)
+            }V2Controller`
+          ];
+          if (V2Controller) controllers.push(V2Controller);
+        } catch (e) {
+          // V2 controller doesn't exist, that's fine
+        }
 
         for (const servicePath of module.servicePaths) {
           try {

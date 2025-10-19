@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, Put, Delete, Query, Inject } from '
 import { AppointmentService } from './services/appointments.service';
 import { Appointment } from './models/appointment.model';
 
-@Controller('api/appointments')
+@Controller({ path: 'appointments', version: '1' })
 export class AppointmentsController {
   constructor(@Inject('appointmentsService') private readonly appointmentService: AppointmentService) {}
 

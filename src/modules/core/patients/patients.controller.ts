@@ -9,7 +9,7 @@ import { SearchPatientDto } from './dto/search-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
 
 @ApiTags('Patients')
-@Controller('api/patients')
+@Controller({ path: 'patients', version: '1' })
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class PatientsController {

@@ -1,34 +1,15 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth, ApiProperty } from '@nestjs/swagger';
 import { UserService } from './services/user.service';
 import { PrismaService } from '../../../core/prisma.service';
 import { AuthGuard } from '../../../core/guards/auth.guard';
 import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
 import { Privileges } from '../../../core/decorators/privileges.decorator';
 import { TransactionService } from '../../../core/transaction.service';
-
-class CreateUserDto {
-  username: string;
-  email: string;
-  password: string;
-  roles?: string[];
-}
-
-class UpdateUserDto {
-  username?: string;
-  email?: string;
-}
-
-class AssignRoleDto {
-  role: string;
-}
-
-class CreateUserWithRolesDto {
-  username: string;
-  email: string;
-  password: string;
-  roles: string[];
-}
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { AssignRoleDto } from './dto/assign-role.dto';
+import { CreateUserWithRolesDto } from './dto/create-user-with-roles.dto';
 
 @ApiTags('Users')
 @Controller('api/users')

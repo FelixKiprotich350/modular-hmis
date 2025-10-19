@@ -1,30 +1,13 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiProperty } from '@nestjs/swagger';
 import { AuthGuard } from '../../../core/guards/auth.guard';
 import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
 import { Privileges } from '../../../core/decorators/privileges.decorator';
 import { Audit } from '../../../core/decorators/audit.decorator';
 import { AuditInterceptor } from '../../../core/interceptors/audit.interceptor';
 import { User } from '../../../core/decorators/user.decorator';
-
-
-class CreateInventoryDto {
-  itemName: string;
-  category: string;
-  quantity: number;
-  unitPrice: number;
-  supplier?: string;
-  expirationDate?: string;
-}
-
-class UpdateInventoryDto {
-  itemName?: string;
-  category?: string;
-  quantity?: number;
-  unitPrice?: number;
-  supplier?: string;
-  expirationDate?: string;
-}
+import { CreateInventoryDto } from './dto/create-inventory.dto';
+import { UpdateInventoryDto } from './dto/update-inventory.dto';
 
 @ApiTags('Inventory')
 @Controller('api/inventory')

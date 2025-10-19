@@ -1,29 +1,15 @@
 import { Controller, Get, Post, Body, Param, Delete, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth, ApiProperty } from '@nestjs/swagger';
 import { RoleprivilegeService } from './services/roleprivilege.service';
 import { PrismaService } from '../../../core/prisma.service';
 import { AuthGuard } from '../../../core/guards/auth.guard';
 import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
 import { Privileges } from '../../../core/decorators/privileges.decorator';
 import { TransactionService } from '../../../core/transaction.service';
-
-class CreateRoleDto {
-  name: string;
-}
-
-class CreatePrivilegeDto {
-  name: string;
-}
-
-class CheckPermissionDto {
-  userId: string;
-  privilegeName: string;
-}
-
-class CreateRoleWithPrivilegesDto {
-  name: string;
-  privilegeIds: string[];
-}
+import { CreateRoleDto } from './dto/create-role.dto';
+import { CreatePrivilegeDto } from './dto/create-privilege.dto';
+import { CheckPermissionDto } from './dto/check-permission.dto';
+import { CreateRoleWithPrivilegesDto } from './dto/create-role-with-privileges.dto';
 
 @ApiTags('Role Privileges')
 @Controller('api/roleprivileges')

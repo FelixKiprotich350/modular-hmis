@@ -16,16 +16,13 @@ import {
   ApiHeader,
   ApiBody,
   ApiBearerAuth,
+  ApiProperty,
 } from "@nestjs/swagger";
 import { AuthService } from "./services/auth.service";
 import { PrismaService } from "../../../core/prisma.service";
 import { AuthGuard } from "../../../core/guards/auth.guard";
 import { User } from "../../../core/decorators/user.decorator";
-
-class LoginDto {
-  username: string;
-  password: string;
-}
+import { LoginDto } from './dto/login.dto';
 
 @ApiTags("Auth")
 @Controller("api/auth")

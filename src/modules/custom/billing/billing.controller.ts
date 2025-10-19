@@ -1,24 +1,10 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiProperty } from '@nestjs/swagger';
 import { AuthGuard } from '../../../core/guards/auth.guard';
 import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
 import { Privileges } from '../../../core/decorators/privileges.decorator';
-
-class CreateBillingDto {
-  patientId: string;
-  serviceCode: string;
-  amount: number;
-  description?: string;
-  insuranceId?: string;
-}
-
-class UpdateBillingDto {
-  serviceCode?: string;
-  amount?: number;
-  description?: string;
-  status?: string;
-  paymentDate?: string;
-}
+import { CreateBillingDto } from './dto/create-billing.dto';
+import { UpdateBillingDto } from './dto/update-billing.dto';
 
 @ApiTags('Billing')
 @Controller('api/billing')

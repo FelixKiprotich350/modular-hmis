@@ -72,3 +72,278 @@ model AuditLog {
   @@index([resource])
   @@index([timestamp])
 }
+
+// Core Module Models
+model Patient {
+  id            String        @id @default(cuid())
+  firstName     String
+  lastName      String
+  dateOfBirth   DateTime
+  gender        String
+  phone         String?
+  email         String?
+  address       String?
+  encounters    Encounter[]
+  appointments  Appointment[]
+  observations  Observation[]
+  prescriptions Prescription[]
+  billings      Billing[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Provider {
+  id           String        @id @default(cuid())
+  firstName    String
+  lastName     String
+  specialty    String?
+  phone        String?
+  email        String?
+  licenseNumber String?      @unique
+  encounters   Encounter[]
+  appointments Appointment[]
+  prescriptions Prescription[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Location {
+  id          String        @id @default(cuid())
+  name        String
+  address     String?
+  phone       String?
+  encounters  Encounter[]
+  appointments Appointment[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Encounter {
+  id           String        @id @default(cuid())
+  patientId    String
+  providerId   String
+  locationId   String?
+  encounterType String
+  startDate    DateTime
+  endDate      DateTime?
+  notes        String?
+  patient      Patient       @relation(fields: [patientId], references: [id])
+  provider     Provider      @relation(fields: [providerId], references: [id])
+  location     Location?     @relation(fields: [locationId], references: [id])
+  observations Observation[]
+  visits       Visit[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([patientId])
+  @@index([providerId])
+}
+
+model Appointment {
+  id              String    @id @default(cuid())
+  patientId       String
+  providerId      String
+  locationId      String?
+  appointmentDate DateTime
+  appointmentTime String
+  reason          String?
+  status          String    @default("scheduled")
+  patient         Patient   @relation(fields: [patientId], references: [id])
+  provider        Provider  @relation(fields: [providerId], references: [id])
+  location        Location? @relation(fields: [locationId], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([patientId])
+  @@index([providerId])
+  @@index([appointmentDate])
+}
+
+model Concept {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  datatype     String
+  units        String?
+  description  String?
+  observations Observation[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Observation {
+  id          String     @id @default(cuid())
+  patientId   String
+  encounterId String?
+  conceptId   String
+  value       String
+  units       String?
+  notes       String?
+  obsDate     DateTime   @default(now())
+  patient     Patient    @relation(fields: [patientId], references: [id])
+  encounter   Encounter? @relation(fields: [encounterId], references: [id])
+  concept     Concept    @relation(fields: [conceptId], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([patientId])
+  @@index([conceptId])
+}
+
+model Visit {
+  id          String     @id @default(cuid())
+  patientId   String
+  encounterId String?
+  visitType   String
+  startDate   DateTime
+  endDate     DateTime?
+  notes       String?
+  encounter   Encounter? @relation(fields: [encounterId], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([patientId])
+}
+
+model Laboratory {
+  id        String   @id @default(cuid())
+  patientId String
+  testName  String
+  result    String?
+  status    String   @default("pending")
+  orderedAt DateTime @default(now())
+  resultAt  DateTime?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+}
+
+model Radiology {
+  id        String   @id @default(cuid())
+  patientId String
+  studyType String
+  result    String?
+  status    String   @default("pending")
+  orderedAt DateTime @default(now())
+  resultAt  DateTime?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+}
+
+model Settings {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  category  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Custom Module Models
+model Inventory {
+  id             String    @id @default(cuid())
+  itemName       String
+  category       String
+  quantity       Int
+  unitPrice      Float
+  supplier       String?
+  expirationDate DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([category])
+}
+
+model Billing {
+  id          String    @id @default(cuid())
+  patientId   String
+  serviceCode String
+  amount      Float
+  description String?
+  status      String    @default("pending")
+  insuranceId String?
+  paymentDate DateTime?
+  patient     Patient   @relation(fields: [patientId], references: [id])
+  insurance   Insurance? @relation(fields: [insuranceId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([patientId])
+  @@index([status])
+}
+
+model Insurance {
+  id           String    @id @default(cuid())
+  policyNumber String    @unique
+  provider     String
+  policyHolder String
+  coverage     Json?
+  billings     Billing[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Prescription {
+  id            String   @id @default(cuid())
+  patientId     String
+  prescriberId  String
+  medicationName String
+  dosage        String
+  quantity      Int
+  instructions  String?
+  status        String   @default("pending")
+  dispensedDate DateTime?
+  patient       Patient  @relation(fields: [patientId], references: [id])
+  prescriber    Provider @relation(fields: [prescriberId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([prescriberId])
+}
+
+model TelemedicineSession {
+  id        String   @id @default(cuid())
+  patientId String
+  providerId String
+  sessionUrl String?
+  startTime DateTime
+  endTime   DateTime?
+  status    String   @default("scheduled")
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([providerId])
+}
+
+model MobileClinic {
+  id        String   @id @default(cuid())
+  name      String
+  location  String
+  schedule  Json?
+  services  String[]
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  title       String
+  type        String
+  parameters  Json?
+  generatedBy String
+  filePath    String?
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([type])
+  @@index([generatedBy])
+}

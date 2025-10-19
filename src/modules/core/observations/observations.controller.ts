@@ -1,23 +1,10 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiProperty } from '@nestjs/swagger';
 import { AuthGuard } from '../../../core/guards/auth.guard';
 import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
 import { Privileges } from '../../../core/decorators/privileges.decorator';
-
-
-class CreateObservationDto {
-  patientId: string;
-  conceptId: string;
-  value: string;
-  units?: string;
-  notes?: string;
-}
-
-class UpdateObservationDto {
-  value?: string;
-  units?: string;
-  notes?: string;
-}
+import { CreateObservationDto } from './dto/create-observation.dto';
+import { UpdateObservationDto } from './dto/update-observation.dto';
 
 @ApiTags('Observations')
 @Controller('api/observations')

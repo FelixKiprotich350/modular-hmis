@@ -1,24 +1,10 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiProperty } from '@nestjs/swagger';
 import { AuthGuard } from '../../../core/guards/auth.guard';
 import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
 import { Privileges } from '../../../core/decorators/privileges.decorator';
-
-class CreatePatientDto {
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
-  gender: string;
-  phone?: string;
-  email?: string;
-}
-
-class UpdatePatientDto {
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  email?: string;
-}
+import { CreatePatientDto } from './dto/create-patient.dto';
+import { UpdatePatientDto } from './dto/update-patient.dto';
 
 @ApiTags('Patients')
 @Controller('api/patients')

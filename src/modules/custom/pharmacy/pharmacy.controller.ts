@@ -1,24 +1,10 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiProperty } from '@nestjs/swagger';
 import { AuthGuard } from '../../../core/guards/auth.guard';
 import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
 import { Privileges } from '../../../core/decorators/privileges.decorator';
-
-
-class CreatePharmacyDto {
-  medicationName: string;
-  dosage: string;
-  quantity: number;
-  patientId: string;
-  prescriberId: string;
-}
-
-class UpdatePharmacyDto {
-  dosage?: string;
-  quantity?: number;
-  status?: string;
-  dispensedDate?: string;
-}
+import { CreatePharmacyDto } from './dto/create-pharmacy.dto';
+import { UpdatePharmacyDto } from './dto/update-pharmacy.dto';
 
 @ApiTags('Pharmacy')
 @Controller('api/pharmacy')

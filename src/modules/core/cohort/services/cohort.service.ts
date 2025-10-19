@@ -4,43 +4,115 @@ import { Cohort, CohortMember, CohortDefinition, CohortType } from '../models/co
 export class CohortService {
   constructor(private db: PrismaClient) {}
 
-  async createCohort(data: Omit<Cohort, 'id' | 'createdAt' | 'updatedAt'>): Promise<Cohort> {
-    return {
-      id: 'cohort_' + Date.now(),
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+  async createCohort(data: Omit<Cohort, 'id' | 'createdAt' | 'updatedAt'>): Promise<any> {
+    return await this.db.cohort.create({
+      data
+    });
   }
 
-  async getCohort(id: string): Promise<Cohort | null> {
-    return null;
+  async getCohort(id: string): Promise<any> {
+    return await this.db.cohort.findUnique({
+      where: { id },
+      include: {
+        members: {
+          include: {
+            patient: {
+              include: {
+                person: true
+              }
+            }
+          }
+        }
+      }
+    });
   }
 
-  async searchCohorts(query: string): Promise<Cohort[]> {
-    return [];
+  async searchCohorts(query: string): Promise<any[]> {
+    return await this.db.cohort.findMany({
+      where: {
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { description: { contains: query, mode: 'insensitive' } }
+        ]
+      }
+    });
   }
 
-  async addPatientToCohort(cohortId: string, patientId: string): Promise<CohortMember> {
-    return {
-      id: 'member_' + Date.now(),
-      cohortId,
-      patientId,
-      startDate: new Date(),
-      createdAt: new Date()
-    };
+  async addPatientToCohort(cohortId: string, patientId: string): Promise<any> {
+    return await this.db.$transaction(async (tx) => {
+      const existing = await tx.cohortMember.findUnique({
+        where: {
+          cohortId_patientId: {
+            cohortId,
+            patientId
+          }
+        }
+      });
+      
+      if (existing) {
+        throw new Error('Patient already in cohort');
+      }
+      
+      return await tx.cohortMember.create({
+        data: {
+          cohortId,
+          patientId,
+          startDate: new Date()
+        },
+        include: {
+          patient: {
+            include: {
+              person: true
+            }
+          },
+          cohort: true
+        }
+      });
+    });
   }
 
   async removePatientFromCohort(cohortId: string, patientId: string): Promise<boolean> {
+    await this.db.cohortMember.update({
+      where: {
+        cohortId_patientId: {
+          cohortId,
+          patientId
+        }
+      },
+      data: {
+        endDate: new Date()
+      }
+    });
     return true;
   }
 
-  async getCohortMembers(cohortId: string): Promise<CohortMember[]> {
-    return [];
+  async getCohortMembers(cohortId: string): Promise<any[]> {
+    return await this.db.cohortMember.findMany({
+      where: {
+        cohortId,
+        endDate: null
+      },
+      include: {
+        patient: {
+          include: {
+            person: true
+          }
+        }
+      }
+    });
   }
 
-  async getPatientCohorts(patientId: string): Promise<Cohort[]> {
-    return [];
+  async getPatientCohorts(patientId: string): Promise<any[]> {
+    return await this.db.cohort.findMany({
+      where: {
+        members: {
+          some: {
+            patientId,
+            endDate: null
+          }
+        }
+      }
+    });
   }
 
   async createCohortDefinition(data: Omit<CohortDefinition, 'id' | 'createdAt'>): Promise<CohortDefinition> {
@@ -84,15 +156,34 @@ export class CohortService {
     return { cohortId, format, exportedAt: new Date() };
   }
 
-  async listCohorts(): Promise<Cohort[]> {
-    return [];
+  async listCohorts(): Promise<any[]> {
+    return await this.db.cohort.findMany({
+      include: {
+        members: {
+          where: {
+            endDate: null
+          }
+        }
+      }
+    });
   }
 
-  async updateCohort(id: string, data: Partial<Cohort>): Promise<Cohort | null> {
-    return null;
+  async updateCohort(id: string, data: Partial<Cohort>): Promise<any> {
+    return await this.db.cohort.update({
+      where: { id },
+      data
+    });
   }
 
   async deleteCohort(id: string): Promise<boolean> {
+    await this.db.$transaction(async (tx) => {
+      await tx.cohortMember.deleteMany({
+        where: { cohortId: id }
+      });
+      await tx.cohort.delete({
+        where: { id }
+      });
+    });
     return true;
   }
 }

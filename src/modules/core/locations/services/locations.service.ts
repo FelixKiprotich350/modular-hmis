@@ -4,32 +4,69 @@ import { Location, LocationTag, LocationAttribute } from '../models/location.mod
 export class LocationService {
   constructor(private db: PrismaClient) {}
 
-  async createLocation(data: Omit<Location, 'id' | 'createdAt' | 'updatedAt'>): Promise<Location> {
-    return {
-      id: 'location_' + Date.now(),
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+  async createLocation(data: Omit<Location, 'id' | 'createdAt' | 'updatedAt'>): Promise<any> {
+    return await this.db.location.create({
+      data
+    });
   }
 
-  async getLocation(id: string): Promise<Location | null> {
-    return null;
+  async getLocation(id: string): Promise<any> {
+    return await this.db.location.findUnique({
+      where: { id },
+      include: {
+        parent: true,
+        children: true
+      }
+    });
   }
 
-  async getLocationHierarchy(id: string): Promise<Location[]> {
-    return [];
+  async getLocationHierarchy(id: string): Promise<any[]> {
+    const location = await this.db.location.findUnique({
+      where: { id },
+      include: {
+        parent: true,
+        children: true
+      }
+    });
+    
+    if (!location) return [];
+    
+    const hierarchy = [location];
+    let current = location.parent;
+    while (current) {
+      hierarchy.unshift(current);
+      current = await this.db.location.findUnique({
+        where: { id: current.parentLocationId || '' },
+        include: { parent: true }
+      });
+    }
+    
+    return hierarchy;
   }
 
-  async getChildLocations(parentId: string): Promise<Location[]> {
-    return [];
+  async getChildLocations(parentId: string): Promise<any[]> {
+    return await this.db.location.findMany({
+      where: {
+        parentLocationId: parentId,
+        retired: false
+      }
+    });
   }
 
-  async searchLocations(query: string): Promise<Location[]> {
-    return [];
+  async searchLocations(query: string): Promise<any[]> {
+    return await this.db.location.findMany({
+      where: {
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { description: { contains: query, mode: 'insensitive' } },
+          { address: { contains: query, mode: 'insensitive' } }
+        ],
+        retired: false
+      }
+    });
   }
 
-  async getLocationsByTag(tagId: string): Promise<Location[]> {
+  async getLocationsByTag(tagId: string): Promise<any[]> {
     return [];
   }
 
@@ -56,19 +93,31 @@ export class LocationService {
     ];
   }
 
-  async retireLocation(locationId: string, reason?: string): Promise<Location | null> {
-    return null;
+  async retireLocation(locationId: string, reason?: string): Promise<any> {
+    return await this.db.location.update({
+      where: { id: locationId },
+      data: { retired: true }
+    });
   }
 
-  async listLocations(): Promise<Location[]> {
-    return [];
+  async listLocations(): Promise<any[]> {
+    return await this.db.location.findMany({
+      where: { retired: false },
+      include: {
+        parent: true
+      }
+    });
   }
 
-  async updateLocation(id: string, data: Partial<Location>): Promise<Location | null> {
-    return null;
+  async updateLocation(id: string, data: Partial<Location>): Promise<any> {
+    return await this.db.location.update({
+      where: { id },
+      data
+    });
   }
 
   async deleteLocation(id: string): Promise<boolean> {
+    await this.db.location.delete({ where: { id } });
     return true;
   }
 }

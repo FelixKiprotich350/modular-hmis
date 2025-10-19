@@ -19,54 +19,129 @@ export interface DrugStrength {
 export class DrugService {
   constructor(private db: PrismaClient) {}
 
-  async createDrug(data: Omit<Drug, 'id' | 'createdAt' | 'updatedAt'>): Promise<Drug> {
-    return {
-      id: 'drug_' + Date.now(),
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date()
+  async createDrug(data: Omit<Drug, 'id' | 'createdAt' | 'updatedAt'>): Promise<any> {
+    return await this.db.drug.create({
+      data
+    });
+  }
+
+  async getDrug(id: string): Promise<any> {
+    return await this.db.drug.findUnique({
+      where: { id }
+    });
+  }
+
+  async getDrugsByName(name: string): Promise<any[]> {
+    return await this.db.drug.findMany({
+      where: {
+        OR: [
+          { name: { contains: name, mode: 'insensitive' } },
+          { genericName: { contains: name, mode: 'insensitive' } }
+        ],
+        retired: false
+      }
+    });
+  }
+
+  async searchDrugs(query: string): Promise<any[]> {
+    return await this.db.drug.findMany({
+      where: {
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { genericName: { contains: query, mode: 'insensitive' } }
+        ],
+        retired: false
+      }
+    });
+  }
+
+  async createDrugOrder(data: Omit<DrugOrder, 'id' | 'createdAt' | 'updatedAt'>): Promise<any> {
+    return await this.db.drugOrder.create({
+      data,
+      include: {
+        patient: {
+          include: {
+            person: true
+          }
+        },
+        drug: true
+      }
+    });
+  }
+
+  async getDrugOrder(id: string): Promise<any> {
+    return await this.db.drugOrder.findUnique({
+      where: { id },
+      include: {
+        patient: {
+          include: {
+            person: true
+          }
+        },
+        drug: true
+      }
+    });
+  }
+
+  async getPatientDrugOrders(patientId: string, status?: string): Promise<any[]> {
+    const where: any = { patientId };
+    if (status) {
+      where.status = status;
+    }
+    
+    return await this.db.drugOrder.findMany({
+      where,
+      include: {
+        drug: true
+      },
+      orderBy: {
+        startDate: 'desc'
+      }
+    });
+  }
+
+  async getActiveDrugOrders(patientId?: string): Promise<any[]> {
+    const where: any = {
+      status: 'ACTIVE',
+      OR: [
+        { endDate: null },
+        { endDate: { gte: new Date() } }
+      ]
     };
+    
+    if (patientId) {
+      where.patientId = patientId;
+    }
+    
+    return await this.db.drugOrder.findMany({
+      where,
+      include: {
+        patient: {
+          include: {
+            person: true
+          }
+        },
+        drug: true
+      }
+    });
   }
 
-  async getDrug(id: string): Promise<Drug | null> {
-    return null;
+  async discontinueDrugOrder(drugOrderId: string, reason: string, discontinuedBy: string): Promise<any> {
+    return await this.db.drugOrder.update({
+      where: { id: drugOrderId },
+      data: {
+        status: 'DISCONTINUED'
+      }
+    });
   }
 
-  async getDrugsByName(name: string): Promise<Drug[]> {
-    return [];
-  }
-
-  async searchDrugs(query: string): Promise<Drug[]> {
-    return [];
-  }
-
-  async createDrugOrder(data: Omit<DrugOrder, 'id' | 'createdAt' | 'updatedAt'>): Promise<DrugOrder> {
-    return {
-      id: 'drugorder_' + Date.now(),
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-  }
-
-  async getDrugOrder(id: string): Promise<DrugOrder | null> {
-    return null;
-  }
-
-  async getPatientDrugOrders(patientId: string, status?: string): Promise<DrugOrder[]> {
-    return [];
-  }
-
-  async getActiveDrugOrders(patientId?: string): Promise<DrugOrder[]> {
-    return [];
-  }
-
-  async discontinueDrugOrder(drugOrderId: string, reason: string, discontinuedBy: string): Promise<DrugOrder | null> {
-    return null;
-  }
-
-  async dispenseDrugOrder(drugOrderId: string, quantityDispensed: number, dispensedBy: string): Promise<DrugOrder | null> {
-    return null;
+  async dispenseDrugOrder(drugOrderId: string, quantityDispensed: number, dispensedBy: string): Promise<any> {
+    return await this.db.drugOrder.update({
+      where: { id: drugOrderId },
+      data: {
+        status: 'DISPENSED'
+      }
+    });
   }
 
   async getDrugFormulations(): Promise<DrugFormulation[]> {
@@ -86,23 +161,40 @@ export class DrugService {
     return false;
   }
 
-  async getPatientMedications(patientId: string): Promise<DrugOrder[]> {
-    return [];
+  async getPatientMedications(patientId: string): Promise<any[]> {
+    return await this.db.drugOrder.findMany({
+      where: { patientId },
+      include: {
+        drug: true
+      },
+      orderBy: {
+        startDate: 'desc'
+      }
+    });
   }
 
-  async listDrugs(): Promise<Drug[]> {
-    return [];
+  async listDrugs(): Promise<any[]> {
+    return await this.db.drug.findMany({
+      where: { retired: false }
+    });
   }
 
-  async updateDrug(id: string, data: Partial<Drug>): Promise<Drug | null> {
-    return null;
+  async updateDrug(id: string, data: Partial<Drug>): Promise<any> {
+    return await this.db.drug.update({
+      where: { id },
+      data
+    });
   }
 
-  async updateDrugOrder(id: string, data: Partial<DrugOrder>): Promise<DrugOrder | null> {
-    return null;
+  async updateDrugOrder(id: string, data: Partial<DrugOrder>): Promise<any> {
+    return await this.db.drugOrder.update({
+      where: { id },
+      data
+    });
   }
 
   async deleteDrug(id: string): Promise<boolean> {
+    await this.db.drug.delete({ where: { id } });
     return true;
   }
 }

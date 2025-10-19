@@ -23,45 +23,143 @@ export interface AppointmentBlock {
 export class AppointmentService {
   constructor(private db: PrismaClient) {}
 
-  async createAppointment(data: Omit<Appointment, 'id' | 'createdAt' | 'updatedAt'>): Promise<Appointment> {
-    return {
-      id: 'appointment_' + Date.now(),
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date()
+  async createAppointment(data: Omit<Appointment, 'id' | 'createdAt' | 'updatedAt'>): Promise<any> {
+    return await this.db.appointment.create({
+      data,
+      include: {
+        patient: {
+          include: {
+            person: true
+          }
+        },
+        provider: true,
+        location: true
+      }
+    });
+  }
+
+  async getAppointment(id: string): Promise<any> {
+    return await this.db.appointment.findUnique({
+      where: { id },
+      include: {
+        patient: {
+          include: {
+            person: true
+          }
+        },
+        provider: true,
+        location: true
+      }
+    });
+  }
+
+  async getPatientAppointments(patientId: string): Promise<any[]> {
+    return await this.db.appointment.findMany({
+      where: { patientId },
+      include: {
+        provider: true,
+        location: true
+      },
+      orderBy: {
+        appointmentDate: 'asc'
+      }
+    });
+  }
+
+  async getProviderAppointments(providerId: string, date?: Date): Promise<any[]> {
+    const where: any = { providerId };
+    if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      where.appointmentDate = {
+        gte: startOfDay,
+        lte: endOfDay
+      };
+    }
+    
+    return await this.db.appointment.findMany({
+      where,
+      include: {
+        patient: {
+          include: {
+            person: true
+          }
+        },
+        location: true
+      },
+      orderBy: {
+        appointmentDate: 'asc'
+      }
+    });
+  }
+
+  async getAppointmentsByDate(date: Date, locationId?: string): Promise<any[]> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+    
+    const where: any = {
+      appointmentDate: {
+        gte: startOfDay,
+        lte: endOfDay
+      }
     };
-  }
-
-  async getAppointment(id: string): Promise<Appointment | null> {
-    return null;
-  }
-
-  async getPatientAppointments(patientId: string): Promise<Appointment[]> {
-    return [];
-  }
-
-  async getProviderAppointments(providerId: string, date?: Date): Promise<Appointment[]> {
-    return [];
-  }
-
-  async getAppointmentsByDate(date: Date, locationId?: string): Promise<Appointment[]> {
-    return [];
+    
+    if (locationId) {
+      where.locationId = locationId;
+    }
+    
+    return await this.db.appointment.findMany({
+      where,
+      include: {
+        patient: {
+          include: {
+            person: true
+          }
+        },
+        provider: true
+      },
+      orderBy: {
+        appointmentDate: 'asc'
+      }
+    });
   }
 
   async getAvailableSlots(providerId: string, date: Date, appointmentTypeId: string): Promise<Date[]> {
     return [];
   }
 
-  async rescheduleAppointment(appointmentId: string, newDate: Date, newTime: string): Promise<Appointment | null> {
-    return null;
+  async rescheduleAppointment(appointmentId: string, newDate: Date, newTime: string): Promise<any> {
+    return await this.db.appointment.update({
+      where: { id: appointmentId },
+      data: {
+        appointmentDate: newDate,
+        appointmentTime: newTime
+      }
+    });
   }
 
-  async cancelAppointment(appointmentId: string, reason?: string): Promise<Appointment | null> {
-    return null;
+  async cancelAppointment(appointmentId: string, reason?: string): Promise<any> {
+    return await this.db.appointment.update({
+      where: { id: appointmentId },
+      data: {
+        status: 'cancelled',
+        reason
+      }
+    });
   }
 
-  async checkInAppointment(appointmentId: string): Promise<Appointment | null> {
-    return null;
+  async checkInAppointment(appointmentId: string): Promise<any> {
+    return await this.db.appointment.update({
+      where: { id: appointmentId },
+      data: {
+        status: 'checked-in'
+      }
+    });
   }
 
   async getAppointmentTypes(): Promise<AppointmentType[]> {
@@ -84,15 +182,33 @@ export class AppointmentService {
     return [];
   }
 
-  async listAppointments(): Promise<Appointment[]> {
-    return [];
+  async listAppointments(): Promise<any[]> {
+    return await this.db.appointment.findMany({
+      include: {
+        patient: {
+          include: {
+            person: true
+          }
+        },
+        provider: true,
+        location: true
+      },
+      orderBy: {
+        appointmentDate: 'asc'
+      },
+      take: 100
+    });
   }
 
-  async updateAppointment(id: string, data: Partial<Appointment>): Promise<Appointment | null> {
-    return null;
+  async updateAppointment(id: string, data: Partial<Appointment>): Promise<any> {
+    return await this.db.appointment.update({
+      where: { id },
+      data
+    });
   }
 
   async deleteAppointment(id: string): Promise<boolean> {
+    await this.db.appointment.delete({ where: { id } });
     return true;
   }
 }

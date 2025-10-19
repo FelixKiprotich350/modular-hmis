@@ -13,42 +13,93 @@ export interface PatientProgramState {
 export class ProgramService {
   constructor(private db: PrismaClient) {}
 
-  async createProgram(data: Omit<Program, 'id' | 'createdAt' | 'updatedAt'>): Promise<Program> {
-    return {
-      id: 'program_' + Date.now(),
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+  async createProgram(data: Omit<Program, 'id' | 'createdAt' | 'updatedAt'>): Promise<any> {
+    return await this.db.program.create({
+      data
+    });
   }
 
-  async getProgram(id: string): Promise<Program | null> {
-    return null;
+  async getProgram(id: string): Promise<any> {
+    return await this.db.program.findUnique({
+      where: { id },
+      include: {
+        enrollments: true,
+        workflows: true
+      }
+    });
   }
 
-  async enrollPatient(data: Omit<ProgramEnrollment, 'id' | 'createdAt' | 'updatedAt'>): Promise<ProgramEnrollment> {
-    return {
-      id: 'enrollment_' + Date.now(),
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+  async enrollPatient(data: Omit<ProgramEnrollment, 'id' | 'createdAt' | 'updatedAt'>): Promise<any> {
+    return await this.db.programEnrollment.create({
+      data,
+      include: {
+        patient: {
+          include: {
+            person: true
+          }
+        },
+        program: true,
+        location: true
+      }
+    });
   }
 
-  async getPatientEnrollments(patientId: string): Promise<ProgramEnrollment[]> {
-    return [];
+  async getPatientEnrollments(patientId: string): Promise<any[]> {
+    return await this.db.programEnrollment.findMany({
+      where: { patientId },
+      include: {
+        program: true,
+        location: true
+      },
+      orderBy: {
+        dateEnrolled: 'desc'
+      }
+    });
   }
 
-  async getProgramEnrollments(programId: string): Promise<ProgramEnrollment[]> {
-    return [];
+  async getProgramEnrollments(programId: string): Promise<any[]> {
+    return await this.db.programEnrollment.findMany({
+      where: { programId },
+      include: {
+        patient: {
+          include: {
+            person: true
+          }
+        },
+        location: true
+      },
+      orderBy: {
+        dateEnrolled: 'desc'
+      }
+    });
   }
 
-  async getActiveEnrollments(): Promise<ProgramEnrollment[]> {
-    return [];
+  async getActiveEnrollments(): Promise<any[]> {
+    return await this.db.programEnrollment.findMany({
+      where: {
+        dateCompleted: null,
+        voided: false
+      },
+      include: {
+        patient: {
+          include: {
+            person: true
+          }
+        },
+        program: true,
+        location: true
+      }
+    });
   }
 
-  async completeEnrollment(enrollmentId: string, outcome?: string, completionDate?: Date): Promise<ProgramEnrollment | null> {
-    return null;
+  async completeEnrollment(enrollmentId: string, outcome?: string, completionDate?: Date): Promise<any> {
+    return await this.db.programEnrollment.update({
+      where: { id: enrollmentId },
+      data: {
+        dateCompleted: completionDate || new Date(),
+        outcome
+      }
+    });
   }
 
   async changeEnrollmentState(enrollmentId: string, stateId: string, startDate?: Date): Promise<PatientProgramState> {
@@ -65,31 +116,43 @@ export class ProgramService {
     return [];
   }
 
-  async getProgramWorkflows(): Promise<ProgramWorkflow[]> {
-    return [
-      { id: '1', programId: 'hiv-program', concept: 'HIV Treatment Status', retired: false, createdAt: new Date() },
-      { id: '2', programId: 'tb-program', concept: 'TB Treatment Status', retired: false, createdAt: new Date() },
-      { id: '3', programId: 'anc-program', concept: 'ANC Status', retired: false, createdAt: new Date() }
-    ];
+  async getProgramWorkflows(): Promise<any[]> {
+    return await this.db.programWorkflow.findMany({
+      where: { retired: false },
+      include: {
+        program: true,
+        states: true
+      }
+    });
   }
 
-  async getWorkflowStates(workflowId: string): Promise<ProgramWorkflowState[]> {
-    return [
-      { id: '1', programWorkflowId: workflowId, concept: 'On Treatment', initial: true, terminal: false, retired: false },
-      { id: '2', programWorkflowId: workflowId, concept: 'Treatment Complete', initial: false, terminal: true, retired: false },
-      { id: '3', programWorkflowId: workflowId, concept: 'Lost to Follow-up', initial: false, terminal: true, retired: false }
-    ];
+  async getWorkflowStates(workflowId: string): Promise<any[]> {
+    return await this.db.programWorkflowState.findMany({
+      where: {
+        programWorkflowId: workflowId,
+        retired: false
+      }
+    });
   }
 
-  async listPrograms(): Promise<Program[]> {
-    return [];
+  async listPrograms(): Promise<any[]> {
+    return await this.db.program.findMany({
+      where: { retired: false },
+      include: {
+        workflows: true
+      }
+    });
   }
 
-  async updateProgram(id: string, data: Partial<Program>): Promise<Program | null> {
-    return null;
+  async updateProgram(id: string, data: Partial<Program>): Promise<any> {
+    return await this.db.program.update({
+      where: { id },
+      data
+    });
   }
 
   async deleteProgram(id: string): Promise<boolean> {
+    await this.db.program.delete({ where: { id } });
     return true;
   }
 }

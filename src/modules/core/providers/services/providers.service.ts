@@ -4,32 +4,63 @@ import { Provider, ProviderAttribute, ProviderRole, ProviderManagement, Person }
 export class ProviderService {
   constructor(private db: PrismaClient) {}
 
-  async createProvider(personData: Omit<Person, 'id'>, identifier?: string): Promise<Provider> {
-    const personId = 'person_' + Date.now();
-    return {
-      id: 'provider_' + Date.now(),
-      personId,
-      identifier: identifier || 'PROV' + Date.now(),
-      name: `${personData.firstName} ${personData.lastName}`,
-      retired: false,
-      person: { id: personId, ...personData },
-      attributes: [],
-      roles: [],
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+  async createProvider(personData: Omit<Person, 'id'>, identifier?: string): Promise<any> {
+    return await this.db.$transaction(async (tx) => {
+      const person = await tx.person.create({
+        data: personData
+      });
+
+      return await tx.provider.create({
+        data: {
+          personId: person.id,
+          identifier: identifier || `PROV${Date.now()}`,
+          name: `${personData.firstName} ${personData.lastName}`,
+          retired: false
+        },
+        include: {
+          person: true
+        }
+      });
+    });
   }
 
-  async getProvider(id: string): Promise<Provider | null> {
-    return null;
+  async getProvider(id: string): Promise<any> {
+    return await this.db.provider.findUnique({
+      where: { id },
+      include: {
+        person: true
+      }
+    });
   }
 
-  async getProviderByIdentifier(identifier: string): Promise<Provider | null> {
-    return null;
+  async getProviderByIdentifier(identifier: string): Promise<any> {
+    return await this.db.provider.findUnique({
+      where: { identifier },
+      include: {
+        person: true
+      }
+    });
   }
 
-  async searchProviders(query: string): Promise<Provider[]> {
-    return [];
+  async searchProviders(query: string): Promise<any[]> {
+    return await this.db.provider.findMany({
+      where: {
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { identifier: { contains: query, mode: 'insensitive' } },
+          { person: {
+            OR: [
+              { firstName: { contains: query, mode: 'insensitive' } },
+              { lastName: { contains: query, mode: 'insensitive' } }
+            ]
+          }}
+        ],
+        retired: false
+      },
+      include: {
+        person: true
+      }
+    });
   }
 
   async addProviderAttribute(providerId: string, attributeTypeId: string, value: string): Promise<ProviderAttribute> {
@@ -57,7 +88,7 @@ export class ProviderService {
     };
   }
 
-  async getProvidersByRole(roleId: string): Promise<Provider[]> {
+  async getProvidersByRole(roleId: string): Promise<any[]> {
     return [];
   }
 
@@ -70,23 +101,38 @@ export class ProviderService {
     ];
   }
 
-  async getProvidersByLocation(locationId: string): Promise<Provider[]> {
+  async getProvidersByLocation(locationId: string): Promise<any[]> {
     return [];
   }
 
-  async retireProvider(providerId: string, reason?: string): Promise<Provider | null> {
-    return null;
+  async retireProvider(providerId: string, reason?: string): Promise<any> {
+    return await this.db.provider.update({
+      where: { id: providerId },
+      data: { retired: true }
+    });
   }
 
-  async listProviders(): Promise<Provider[]> {
-    return [];
+  async listProviders(): Promise<any[]> {
+    return await this.db.provider.findMany({
+      where: { retired: false },
+      include: {
+        person: true
+      }
+    });
   }
 
-  async updateProvider(id: string, data: Partial<Provider>): Promise<Provider | null> {
-    return null;
+  async updateProvider(id: string, data: Partial<Provider>): Promise<any> {
+    return await this.db.provider.update({
+      where: { id },
+      data,
+      include: {
+        person: true
+      }
+    });
   }
 
   async deleteProvider(id: string): Promise<boolean> {
+    await this.db.provider.delete({ where: { id } });
     return true;
   }
 }

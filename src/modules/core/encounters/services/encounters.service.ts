@@ -65,30 +65,93 @@ export class EncounterService {
     });
   }
 
-  async getEncountersByType(encounterType: string): Promise<Encounter[]> {
-    return [];
+  async getEncountersByType(encounterType: string): Promise<any[]> {
+    return await this.db.encounter.findMany({
+      where: { encounterType },
+      include: {
+        patient: {
+          include: {
+            person: true
+          }
+        },
+        provider: true,
+        location: true
+      },
+      orderBy: {
+        startDate: 'desc'
+      }
+    });
   }
 
-  async getEncountersByProvider(providerId: string): Promise<Encounter[]> {
-    return [];
+  async getEncountersByProvider(providerId: string): Promise<any[]> {
+    return await this.db.encounter.findMany({
+      where: { providerId },
+      include: {
+        patient: {
+          include: {
+            person: true
+          }
+        },
+        location: true,
+        observations: {
+          include: {
+            concept: true
+          }
+        }
+      },
+      orderBy: {
+        startDate: 'desc'
+      }
+    });
   }
 
-  async getEncountersByDateRange(startDate: Date, endDate: Date): Promise<Encounter[]> {
-    return [];
+  async getEncountersByDateRange(startDate: Date, endDate: Date): Promise<any[]> {
+    return await this.db.encounter.findMany({
+      where: {
+        startDate: {
+          gte: startDate,
+          lte: endDate
+        }
+      },
+      include: {
+        patient: {
+          include: {
+            person: true
+          }
+        },
+        provider: true,
+        location: true
+      },
+      orderBy: {
+        startDate: 'desc'
+      }
+    });
   }
 
-  async closeEncounter(encounterId: string): Promise<Encounter | null> {
-    return null;
+  async closeEncounter(encounterId: string): Promise<any> {
+    return await this.db.encounter.update({
+      where: { id: encounterId },
+      data: {
+        endDate: new Date()
+      }
+    });
   }
 
-  async addObservationToEncounter(encounterId: string, observation: Omit<Observation, 'id' | 'encounterId' | 'createdAt' | 'updatedAt'>): Promise<Observation> {
-    return {
-      id: 'obs_' + Date.now(),
-      encounterId,
-      ...observation,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+  async addObservationToEncounter(encounterId: string, observation: Omit<Observation, 'id' | 'encounterId' | 'createdAt' | 'updatedAt'>): Promise<any> {
+    return await this.db.observation.create({
+      data: {
+        ...observation,
+        encounterId
+      },
+      include: {
+        concept: true,
+        patient: {
+          include: {
+            person: true
+          }
+        }
+      }
+    });
   }
 
   async getEncounterTypes(): Promise<EncounterType[]> {
@@ -100,15 +163,33 @@ export class EncounterService {
     ];
   }
 
-  async listEncounters(): Promise<Encounter[]> {
-    return [];
+  async listEncounters(): Promise<any[]> {
+    return await this.db.encounter.findMany({
+      include: {
+        patient: {
+          include: {
+            person: true
+          }
+        },
+        provider: true,
+        location: true
+      },
+      orderBy: {
+        startDate: 'desc'
+      },
+      take: 100
+    });
   }
 
-  async updateEncounter(id: string, data: Partial<Encounter>): Promise<Encounter | null> {
-    return null;
+  async updateEncounter(id: string, data: Partial<Encounter>): Promise<any> {
+    return await this.db.encounter.update({
+      where: { id },
+      data
+    });
   }
 
   async deleteEncounter(id: string): Promise<boolean> {
+    await this.db.encounter.delete({ where: { id } });
     return true;
   }
 }

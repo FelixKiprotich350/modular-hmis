@@ -4,37 +4,68 @@ import { Radiology, RadiologyStudy, RadiologyModality } from '../models/radiolog
 export class RadiologyService {
   constructor(private db: PrismaClient) {}
 
-  async createRadiologyOrder(data: Omit<Radiology, 'id' | 'createdAt' | 'updatedAt'>): Promise<Radiology> {
-    return {
-      id: 'rad_' + Date.now(),
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+  async createRadiologyOrder(data: Omit<Radiology, 'id' | 'createdAt' | 'updatedAt'>): Promise<any> {
+    return await this.db.radiology.create({
+      data
+    });
   }
 
-  async getRadiologyOrder(id: string): Promise<Radiology | null> {
-    return null;
+  async getRadiologyOrder(id: string): Promise<any> {
+    return await this.db.radiology.findUnique({
+      where: { id }
+    });
   }
 
-  async getPatientRadiologyOrders(patientId: string, status?: string): Promise<Radiology[]> {
-    return [];
+  async getPatientRadiologyOrders(patientId: string, status?: string): Promise<any[]> {
+    const where: any = { patientId };
+    if (status) {
+      where.status = status;
+    }
+    
+    return await this.db.radiology.findMany({
+      where,
+      orderBy: {
+        orderedAt: 'desc'
+      }
+    });
   }
 
-  async getOrdersByStatus(status: string): Promise<Radiology[]> {
-    return [];
+  async getOrdersByStatus(status: string): Promise<any[]> {
+    return await this.db.radiology.findMany({
+      where: { status },
+      orderBy: {
+        orderedAt: 'desc'
+      }
+    });
   }
 
-  async scheduleStudy(orderId: string, scheduledAt: Date): Promise<Radiology | null> {
-    return null;
+  async scheduleStudy(orderId: string, scheduledAt: Date): Promise<any> {
+    return await this.db.radiology.update({
+      where: { id: orderId },
+      data: {
+        status: 'scheduled'
+      }
+    });
   }
 
-  async startStudy(orderId: string, performedBy: string): Promise<Radiology | null> {
-    return null;
+  async startStudy(orderId: string, performedBy: string): Promise<any> {
+    return await this.db.radiology.update({
+      where: { id: orderId },
+      data: {
+        status: 'in-progress'
+      }
+    });
   }
 
-  async updateRadiologyResult(id: string, findings: string, impression: string, radiologist: string): Promise<Radiology | null> {
-    return null;
+  async updateRadiologyResult(id: string, findings: string, impression: string, radiologist: string): Promise<any> {
+    return await this.db.radiology.update({
+      where: { id },
+      data: {
+        result: `${findings}\n\nImpression: ${impression}`,
+        status: 'completed',
+        resultAt: new Date()
+      }
+    });
   }
 
   async getRadiologyStudies(): Promise<RadiologyStudy[]> {
@@ -59,23 +90,52 @@ export class RadiologyService {
     ];
   }
 
-  async getPendingReports(): Promise<Radiology[]> {
-    return [];
+  async getPendingReports(): Promise<any[]> {
+    return await this.db.radiology.findMany({
+      where: {
+        status: { in: ['pending', 'scheduled', 'in-progress'] }
+      },
+      orderBy: {
+        orderedAt: 'asc'
+      }
+    });
   }
 
-  async getScheduledStudies(date?: Date): Promise<Radiology[]> {
-    return [];
+  async getScheduledStudies(date?: Date): Promise<any[]> {
+    const where: any = {
+      status: 'scheduled'
+    };
+    
+    return await this.db.radiology.findMany({
+      where,
+      orderBy: {
+        orderedAt: 'asc'
+      }
+    });
   }
 
-  async listRadiologyOrders(): Promise<Radiology[]> {
-    return [];
+  async listRadiologyOrders(): Promise<any[]> {
+    return await this.db.radiology.findMany({
+      orderBy: {
+        orderedAt: 'desc'
+      },
+      take: 100
+    });
   }
 
-  async updateRadiologyOrder(id: string, data: Partial<Radiology>): Promise<Radiology | null> {
-    return null;
+  async updateRadiologyOrder(id: string, data: Partial<Radiology>): Promise<any> {
+    return await this.db.radiology.update({
+      where: { id },
+      data
+    });
   }
 
-  async cancelRadiologyOrder(id: string, reason?: string): Promise<Radiology | null> {
-    return null;
+  async cancelRadiologyOrder(id: string, reason?: string): Promise<any> {
+    return await this.db.radiology.update({
+      where: { id },
+      data: {
+        status: 'cancelled'
+      }
+    });
   }
 }

@@ -74,37 +74,158 @@ model AuditLog {
 }
 
 // Core Module Models
+model Person {
+  id                 String            @id @default(cuid())
+  firstName          String
+  lastName           String
+  middleName         String?
+  gender             String
+  birthdate          DateTime?
+  birthdateEstimated Boolean           @default(false)
+  dead               Boolean           @default(false)
+  deathDate          DateTime?
+  causeOfDeath       String?
+  patients           Patient[]
+  providers          Provider[]
+  addresses          PersonAddress[]
+  attributes         PersonAttribute[]
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+}
+
+model PersonAddress {
+  id             String   @id @default(cuid())
+  personId       String
+  preferred      Boolean  @default(false)
+  address1       String?
+  address2       String?
+  cityVillage    String?
+  stateProvince  String?
+  country        String?
+  postalCode     String?
+  countyDistrict String?
+  address3       String?
+  address4       String?
+  address5       String?
+  address6       String?
+  startDate      DateTime?
+  endDate        DateTime?
+  person         Person   @relation(fields: [personId], references: [id])
+  createdAt      DateTime @default(now())
+
+  @@index([personId])
+}
+
+model PersonAttribute {
+  id              String              @id @default(cuid())
+  personId        String
+  attributeTypeId String
+  value           String
+  person          Person              @relation(fields: [personId], references: [id])
+  attributeType   PersonAttributeType @relation(fields: [attributeTypeId], references: [id])
+  createdAt       DateTime            @default(now())
+
+  @@index([personId])
+}
+
+model PersonAttributeType {
+  id          String            @id @default(cuid())
+  name        String            @unique
+  description String?
+  format      String
+  required    Boolean           @default(false)
+  attributes  PersonAttribute[]
+}
+
 model Patient {
-  id            String        @id @default(cuid())
-  firstName     String
-  lastName      String
-  dateOfBirth   DateTime
-  gender        String
-  phone         String?
-  email         String?
-  address       String?
+  id            String              @id @default(cuid())
+  personId      String
+  identifiers   PatientIdentifier[]
   encounters    Encounter[]
   appointments  Appointment[]
   observations  Observation[]
   prescriptions Prescription[]
   billings      Billing[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  person        Person              @relation(fields: [personId], references: [id])
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([personId])
+}
+
+model PatientIdentifier {
+  id               String         @id @default(cuid())
+  patientId        String
+  identifierTypeId String
+  identifier       String
+  preferred        Boolean        @default(false)
+  locationId       String?
+  patient          Patient        @relation(fields: [patientId], references: [id])
+  identifierType   IdentifierType @relation(fields: [identifierTypeId], references: [id])
+  createdAt        DateTime       @default(now())
+
+  @@unique([identifier, identifierTypeId])
+  @@index([patientId])
+}
+
+model IdentifierType {
+  id                String              @id @default(cuid())
+  name              String              @unique
+  description       String?
+  format            String?
+  required          Boolean             @default(false)
+  checkDigit        Boolean             @default(false)
+  retired           Boolean             @default(false)
+  patientIdentifiers PatientIdentifier[]
+  identifierSources IdentifierSource[]
+}
+
+model IdentifierSource {
+  id                  String             @id @default(cuid())
+  name                String             @unique
+  description         String?
+  identifierTypeId    String
+  baseCharacterSet    String?
+  prefix              String?
+  suffix              String?
+  firstIdentifierBase String?
+  minLength           Int?
+  maxLength           Int?
+  retired             Boolean            @default(false)
+  identifierType      IdentifierType     @relation(fields: [identifierTypeId], references: [id])
+  pooledIdentifiers   PooledIdentifier[]
+  createdAt           DateTime           @default(now())
+
+  @@index([identifierTypeId])
+}
+
+model PooledIdentifier {
+  id         String           @id @default(cuid())
+  sourceId   String
+  identifier String           @unique
+  used       Boolean          @default(false)
+  dateUsed   DateTime?
+  comment    String?
+  source     IdentifierSource @relation(fields: [sourceId], references: [id])
+  createdAt  DateTime         @default(now())
+
+  @@index([sourceId, used])
 }
 
 model Provider {
-  id           String        @id @default(cuid())
-  firstName    String
-  lastName     String
-  specialty    String?
-  phone        String?
-  email        String?
-  licenseNumber String?      @unique
-  encounters   Encounter[]
-  appointments Appointment[]
+  id            String        @id @default(cuid())
+  personId      String?
+  identifier    String?       @unique
+  name          String?
+  retired       Boolean       @default(false)
+  person        Person?       @relation(fields: [personId], references: [id])
+  encounters    Encounter[]
+  appointments  Appointment[]
   prescriptions Prescription[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([personId])
 }
 
 model Location {
@@ -163,11 +284,85 @@ model Concept {
   id           String        @id @default(cuid())
   name         String        @unique
   datatype     String
+  conceptClass String?
   units        String?
   description  String?
+  retired      Boolean       @default(false)
+  answers      ConceptAnswer[] @relation("ConceptAnswers")
+  questions    ConceptAnswer[] @relation("ConceptQuestions")
   observations Observation[]
+  formFields   FormField[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+}
+
+model ConceptAnswer {
+  id         String  @id @default(cuid())
+  conceptId  String
+  answerConcept String
+  sortWeight Float?
+  concept    Concept @relation("ConceptQuestions", fields: [conceptId], references: [id])
+  answer     Concept @relation("ConceptAnswers", fields: [answerConcept], references: [id])
+
+  @@unique([conceptId, answerConcept])
+}
+
+model Form {
+  id            String      @id @default(cuid())
+  name          String      @unique
+  version       String
+  description   String?
+  encounterType String?
+  published     Boolean     @default(false)
+  retired       Boolean     @default(false)
+  fields        FormField[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model FormField {
+  id          String   @id @default(cuid())
+  formId      String
+  conceptId   String?
+  fieldNumber Int
+  fieldPart   String?
+  pageNumber  Int?
+  minOccurs   Int?
+  maxOccurs   Int?
+  required    Boolean  @default(false)
+  sortWeight  Float?
+  form        Form     @relation(fields: [formId], references: [id])
+  concept     Concept? @relation(fields: [conceptId], references: [id])
+
+  @@index([formId])
+}
+
+model AddressHierarchyLevel {
+  id           String                  @id @default(cuid())
+  name         String                  @unique
+  levelId      Int                     @unique
+  addressField String
+  required     Boolean                 @default(false)
+  parentId     String?
+  parent       AddressHierarchyLevel?  @relation("LevelHierarchy", fields: [parentId], references: [id])
+  children     AddressHierarchyLevel[] @relation("LevelHierarchy")
+  entries      AddressHierarchyEntry[]
+}
+
+model AddressHierarchyEntry {
+  id               String                @id @default(cuid())
+  name             String
+  levelId          String
+  parentId         String?
+  userGeneratedId  String?
+  latitude         Float?
+  longitude        Float?
+  level            AddressHierarchyLevel @relation(fields: [levelId], references: [id])
+  parent           AddressHierarchyEntry? @relation("EntryHierarchy", fields: [parentId], references: [id])
+  children         AddressHierarchyEntry[] @relation("EntryHierarchy")
+
+  @@index([levelId])
+  @@index([parentId])
 }
 
 model Observation {

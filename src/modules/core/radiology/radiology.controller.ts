@@ -1,67 +1,93 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
-import { AuthGuard } from '../../../core/guards/auth.guard';
-import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
-import { Privileges } from '../../../core/decorators/privileges.decorator';
+import { Controller, Get, Post, Body, Param, Put, Query } from '@nestjs/common';
+import { RadiologyService } from './services/radiology.service';
+import { Radiology } from './models/radiology.model';
 
-
-class CreateRadiologyDto {
-  patientId: string;
-  orderType: string;
-  bodyPart: string;
-  urgency?: string;
-  notes?: string;
-}
-
-class UpdateRadiologyDto {
-  orderType?: string;
-  bodyPart?: string;
-  urgency?: string;
-  notes?: string;
-  status?: string;
-}
-
-@ApiTags('Radiology')
 @Controller('api/radiology')
-@UseGuards(AuthGuard, PrivilegeGuard)
-@ApiBearerAuth()
 export class RadiologyController {
-  @Post()
-  @Privileges('create_radiology_orders')
-  @ApiOperation({ summary: 'Create radiology order' })
-  @ApiResponse({ status: 201, description: 'Radiology order created' })
-  @ApiBody({ type: CreateRadiologyDto })
-  create(@Body() createDto: CreateRadiologyDto) {
-    return { message: 'Radiology order created', data: createDto };
+  constructor(private readonly radiologyService: RadiologyService) {}
+
+  @Post('orders')
+  async createRadiologyOrder(@Body() createOrderDto: Omit<Radiology, 'id' | 'createdAt' | 'updatedAt'>) {
+    const order = await this.radiologyService.createRadiologyOrder(createOrderDto);
+    return { message: 'Radiology order created', order };
   }
 
-  @Get()
-  @Privileges('view_radiology')
-  @ApiOperation({ summary: 'Get all radiology' })
-  @ApiResponse({ status: 200, description: 'List of radiology' })
-  findAll() {
-    return { message: 'Radiology API', data: [] };
+  @Get('studies')
+  async getRadiologyStudies() {
+    const studies = await this.radiologyService.getRadiologyStudies();
+    return { studies };
   }
 
-  @Get(':id')
-  @Privileges('view_radiology')
-  @ApiOperation({ summary: 'Get radiology by ID' })
-  findOne(@Param('id') id: string) {
-    return { message: `Radiology ${id}`, data: null };
+  @Get('modalities')
+  async getRadiologyModalities() {
+    const modalities = await this.radiologyService.getRadiologyModalities();
+    return { modalities };
   }
 
-  @Patch(':id')
-  @Privileges('create_radiology_orders')
-  @ApiOperation({ summary: 'Update radiology order' })
-  @ApiBody({ type: UpdateRadiologyDto })
-  update(@Param('id') id: string, @Body() updateDto: UpdateRadiologyDto) {
-    return { message: `Radiology order ${id} updated`, data: updateDto };
+  @Get('studies/modality/:modality')
+  async getStudiesByModality(@Param('modality') modality: string) {
+    const studies = await this.radiologyService.getStudiesByModality(modality);
+    return { studies, modality };
   }
 
-  @Delete(':id')
-  @Privileges('create_radiology_orders')
-  @ApiOperation({ summary: 'Delete radiology order' })
-  remove(@Param('id') id: string) {
-    return { message: `Radiology order ${id} deleted` };
+  @Get('orders/patient/:patientId')
+  async getPatientRadiologyOrders(@Param('patientId') patientId: string, @Query('status') status?: string) {
+    const orders = await this.radiologyService.getPatientRadiologyOrders(patientId, status);
+    return { orders, patientId, status };
+  }
+
+  @Get('orders/status/:status')
+  async getOrdersByStatus(@Param('status') status: string) {
+    const orders = await this.radiologyService.getOrdersByStatus(status);
+    return { orders, status };
+  }
+
+  @Get('orders/pending-reports')
+  async getPendingReports() {
+    const orders = await this.radiologyService.getPendingReports();
+    return { orders };
+  }
+
+  @Get('orders/scheduled')
+  async getScheduledStudies(@Query('date') date?: string) {
+    const studyDate = date ? new Date(date) : undefined;
+    const orders = await this.radiologyService.getScheduledStudies(studyDate);
+    return { orders, date };
+  }
+
+  @Put('orders/:id/schedule')
+  async scheduleStudy(@Param('id') orderId: string, @Body() data: { scheduledAt: Date }) {
+    const order = await this.radiologyService.scheduleStudy(orderId, data.scheduledAt);
+    return { message: 'Study scheduled', order };
+  }
+
+  @Put('orders/:id/start')
+  async startStudy(@Param('id') orderId: string, @Body() data: { performedBy: string }) {
+    const order = await this.radiologyService.startStudy(orderId, data.performedBy);
+    return { message: 'Study started', order };
+  }
+
+  @Put('orders/:id/report')
+  async updateReport(@Param('id') id: string, @Body() data: { findings: string; impression: string; radiologist: string }) {
+    const order = await this.radiologyService.updateRadiologyResult(id, data.findings, data.impression, data.radiologist);
+    return { message: 'Report updated', order };
+  }
+
+  @Put('orders/:id/cancel')
+  async cancelOrder(@Param('id') id: string, @Body() data: { reason?: string }) {
+    const order = await this.radiologyService.cancelRadiologyOrder(id, data.reason);
+    return { message: 'Order cancelled', order };
+  }
+
+  @Get('orders')
+  async listOrders() {
+    const orders = await this.radiologyService.listRadiologyOrders();
+    return { orders };
+  }
+
+  @Get('orders/:id')
+  async getOrder(@Param('id') id: string) {
+    const order = await this.radiologyService.getRadiologyOrder(id);
+    return { order };
   }
 }

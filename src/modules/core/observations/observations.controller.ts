@@ -1,52 +1,92 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiProperty } from '@nestjs/swagger';
-import { AuthGuard } from '../../../core/guards/auth.guard';
-import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
-import { Privileges } from '../../../core/decorators/privileges.decorator';
-import { CreateObservationDto } from './dto/create-observation.dto';
-import { UpdateObservationDto } from './dto/update-observation.dto';
+import { Controller, Get, Post, Body, Param, Put, Query, Delete } from '@nestjs/common';
+import { ObservationService } from './services/observations.service';
+import { Observation } from './models/observation.model';
 
-@ApiTags('Observations')
 @Controller('api/observations')
-@UseGuards(AuthGuard, PrivilegeGuard)
-@ApiBearerAuth()
 export class ObservationsController {
+  constructor(private readonly observationService: ObservationService) {}
+
   @Post()
-  @Privileges('create_observations')
-  @ApiOperation({ summary: 'Create observation' })
-  @ApiResponse({ status: 201, description: 'Observation created' })
-  @ApiBody({ type: CreateObservationDto })
-  create(@Body() createDto: CreateObservationDto) {
-    return { message: 'Observation created', data: createDto };
+  async createObservation(@Body() createObsDto: Omit<Observation, 'id' | 'createdAt' | 'updatedAt'>) {
+    const observation = await this.observationService.createObservation(createObsDto);
+    return { message: 'Observation created', observation };
+  }
+
+  @Post('group')
+  async createObservationGroup(@Body() data: { patientId: string; encounterId: string; conceptId: string; observations: Omit<Observation, 'id' | 'createdAt' | 'updatedAt'>[] }) {
+    const group = await this.observationService.createObservationGroup(data.patientId, data.encounterId, data.conceptId, data.observations);
+    return { message: 'Observation group created', group };
+  }
+
+  @Post('vitals')
+  async recordVitalSigns(@Body() data: { patientId: string; encounterId: string; vitals: { conceptId: string; value: string; units?: string }[] }) {
+    const observations = await this.observationService.recordVitalSigns(data.patientId, data.encounterId, data.vitals);
+    return { message: 'Vital signs recorded', observations };
+  }
+
+  @Get('patient/:patientId')
+  async getPatientObservations(@Param('patientId') patientId: string, @Query('concept') conceptId?: string) {
+    const observations = await this.observationService.getPatientObservations(patientId, conceptId);
+    return { observations, patientId, conceptId };
+  }
+
+  @Get('patient/:patientId/vitals')
+  async getPatientVitalSigns(@Param('patientId') patientId: string, @Query('encounter') encounterId?: string) {
+    const vitals = await this.observationService.getVitalSigns(patientId, encounterId);
+    return { vitals, patientId, encounterId };
+  }
+
+  @Get('patient/:patientId/latest/:conceptId')
+  async getLatestObservation(@Param('patientId') patientId: string, @Param('conceptId') conceptId: string) {
+    const observation = await this.observationService.getLatestObservation(patientId, conceptId);
+    return { observation, patientId, conceptId };
+  }
+
+  @Get('encounter/:encounterId')
+  async getEncounterObservations(@Param('encounterId') encounterId: string) {
+    const observations = await this.observationService.getEncounterObservations(encounterId);
+    return { observations, encounterId };
+  }
+
+  @Get('concept/:conceptId')
+  async getObservationsByConcept(@Param('conceptId') conceptId: string) {
+    const observations = await this.observationService.getObservationsByConcept(conceptId);
+    return { observations, conceptId };
+  }
+
+  @Get('patient/:patientId/by-date')
+  async getObservationsByDateRange(@Param('patientId') patientId: string, @Query('start') startDate: string, @Query('end') endDate: string) {
+    const observations = await this.observationService.getObservationsByDateRange(patientId, new Date(startDate), new Date(endDate));
+    return { observations, patientId, startDate, endDate };
   }
 
   @Get()
-  @Privileges('view_observations')
-  @ApiOperation({ summary: 'Get all observations' })
-  @ApiResponse({ status: 200, description: 'List of observations' })
-  findAll() {
-    return { message: 'Observations API', data: [] };
+  async listObservations() {
+    const observations = await this.observationService.listObservations();
+    return { observations };
   }
 
   @Get(':id')
-  @Privileges('view_observations')
-  @ApiOperation({ summary: 'Get observations by ID' })
-  findOne(@Param('id') id: string) {
-    return { message: `Observations ${id}`, data: null };
+  async getObservation(@Param('id') id: string) {
+    const observation = await this.observationService.getObservation(id);
+    return { observation };
   }
 
-  @Patch(':id')
-  @Privileges('create_observations')
-  @ApiOperation({ summary: 'Update observation' })
-  @ApiBody({ type: UpdateObservationDto })
-  update(@Param('id') id: string, @Body() updateDto: UpdateObservationDto) {
-    return { message: `Observation ${id} updated`, data: updateDto };
+  @Put(':id')
+  async updateObservation(@Param('id') id: string, @Body() updateData: Partial<Observation>) {
+    const observation = await this.observationService.updateObservation(id, updateData);
+    return { message: 'Observation updated', observation };
+  }
+
+  @Put(':id/void')
+  async voidObservation(@Param('id') id: string, @Body() data: { reason: string }) {
+    const observation = await this.observationService.voidObservation(id, data.reason);
+    return { message: 'Observation voided', observation };
   }
 
   @Delete(':id')
-  @Privileges('create_observations')
-  @ApiOperation({ summary: 'Delete observation' })
-  remove(@Param('id') id: string) {
-    return { message: `Observation ${id} deleted` };
+  async deleteObservation(@Param('id') id: string) {
+    const deleted = await this.observationService.deleteObservation(id);
+    return { message: 'Observation deleted', deleted };
   }
 }

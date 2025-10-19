@@ -13,20 +13,54 @@ export class FormService {
     };
   }
 
+  async getForm(id: string): Promise<Form | null> {
+    return null;
+  }
+
   async getFormsByEncounterType(encounterType: string): Promise<Form[]> {
     return [];
   }
 
-  async addFieldToForm(formId: string, fieldId: string, fieldNumber: number): Promise<FormField> {
+  async searchForms(query: string): Promise<Form[]> {
+    return [];
+  }
+
+  async publishForm(formId: string): Promise<Form | null> {
+    return null;
+  }
+
+  async addFieldToForm(formId: string, conceptId: string, fieldNumber: number, required: boolean = false): Promise<FormField> {
     return {
       id: 'formfield_' + Date.now(),
       formId,
+      conceptId,
       fieldNumber,
-      required: false
+      required,
+      sortWeight: fieldNumber
     };
+  }
+
+  async removeFieldFromForm(formId: string, fieldId: string): Promise<boolean> {
+    return true;
   }
 
   async getFormStructure(formId: string): Promise<{ form: Form; fields: FormField[] } | null> {
     return null;
+  }
+
+  async getFormFields(formId: string): Promise<FormField[]> {
+    return [];
+  }
+
+  async listForms(): Promise<Form[]> {
+    return [];
+  }
+
+  async updateForm(id: string, data: Partial<Form>): Promise<Form | null> {
+    return null;
+  }
+
+  async deleteForm(id: string): Promise<boolean> {
+    return true;
   }
 }

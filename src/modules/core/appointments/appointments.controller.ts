@@ -1,52 +1,99 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiProperty } from '@nestjs/swagger';
-import { AuthGuard } from '../../../core/guards/auth.guard';
-import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
-import { Privileges } from '../../../core/decorators/privileges.decorator';
-import { CreateAppointmentDto } from './dto/create-appointment.dto';
-import { UpdateAppointmentDto } from './dto/update-appointment.dto';
+import { Controller, Get, Post, Body, Param, Put, Delete, Query } from '@nestjs/common';
+import { AppointmentService } from './services/appointments.service';
+import { Appointment } from './models/appointment.model';
 
-@ApiTags('Appointments')
 @Controller('api/appointments')
-@UseGuards(AuthGuard, PrivilegeGuard)
-@ApiBearerAuth()
 export class AppointmentsController {
+  constructor(private readonly appointmentService: AppointmentService) {}
+
   @Post()
-  @Privileges('create_appointments')
-  @ApiOperation({ summary: 'Create appointment' })
-  @ApiResponse({ status: 201, description: 'Appointment created' })
-  @ApiBody({ type: CreateAppointmentDto })
-  create(@Body() createDto: CreateAppointmentDto) {
-    return { message: 'Appointment created', data: createDto };
+  async createAppointment(@Body() createAppointmentDto: Omit<Appointment, 'id' | 'createdAt' | 'updatedAt'>) {
+    const appointment = await this.appointmentService.createAppointment(createAppointmentDto);
+    return { message: 'Appointment created', appointment };
+  }
+
+  @Get('types')
+  async getAppointmentTypes() {
+    const types = await this.appointmentService.getAppointmentTypes();
+    return { types };
+  }
+
+  @Get('patient/:patientId')
+  async getPatientAppointments(@Param('patientId') patientId: string) {
+    const appointments = await this.appointmentService.getPatientAppointments(patientId);
+    return { appointments, patientId };
+  }
+
+  @Get('provider/:providerId')
+  async getProviderAppointments(@Param('providerId') providerId: string, @Query('date') date?: string) {
+    const appointmentDate = date ? new Date(date) : undefined;
+    const appointments = await this.appointmentService.getProviderAppointments(providerId, appointmentDate);
+    return { appointments, providerId, date };
+  }
+
+  @Get('by-date')
+  async getAppointmentsByDate(@Query('date') date: string, @Query('location') locationId?: string) {
+    const appointments = await this.appointmentService.getAppointmentsByDate(new Date(date), locationId);
+    return { appointments, date, locationId };
+  }
+
+  @Get('available-slots')
+  async getAvailableSlots(@Query('provider') providerId: string, @Query('date') date: string, @Query('type') appointmentTypeId: string) {
+    const slots = await this.appointmentService.getAvailableSlots(providerId, new Date(date), appointmentTypeId);
+    return { slots, providerId, date, appointmentTypeId };
+  }
+
+  @Post('blocks')
+  async createAppointmentBlock(@Body() blockData: { providerId: string; locationId: string; startDate: Date; endDate: Date; appointmentTypeId: string; maxAppointments: number }) {
+    const block = await this.appointmentService.createAppointmentBlock(blockData);
+    return { message: 'Appointment block created', block };
+  }
+
+  @Get('provider/:providerId/schedule')
+  async getProviderSchedule(@Param('providerId') providerId: string, @Query('start') startDate: string, @Query('end') endDate: string) {
+    const schedule = await this.appointmentService.getProviderSchedule(providerId, new Date(startDate), new Date(endDate));
+    return { schedule, providerId, startDate, endDate };
+  }
+
+  @Put(':id/reschedule')
+  async rescheduleAppointment(@Param('id') appointmentId: string, @Body() data: { newDate: Date; newTime: string }) {
+    const appointment = await this.appointmentService.rescheduleAppointment(appointmentId, data.newDate, data.newTime);
+    return { message: 'Appointment rescheduled', appointment };
+  }
+
+  @Put(':id/cancel')
+  async cancelAppointment(@Param('id') appointmentId: string, @Body() data: { reason?: string }) {
+    const appointment = await this.appointmentService.cancelAppointment(appointmentId, data.reason);
+    return { message: 'Appointment cancelled', appointment };
+  }
+
+  @Put(':id/checkin')
+  async checkInAppointment(@Param('id') appointmentId: string) {
+    const appointment = await this.appointmentService.checkInAppointment(appointmentId);
+    return { message: 'Patient checked in', appointment };
   }
 
   @Get()
-  @Privileges('view_appointments')
-  @ApiOperation({ summary: 'Get all appointments' })
-  @ApiResponse({ status: 200, description: 'List of appointments' })
-  findAll() {
-    return { message: 'Appointments API', data: [] };
+  async listAppointments() {
+    const appointments = await this.appointmentService.listAppointments();
+    return { appointments };
   }
 
   @Get(':id')
-  @Privileges('view_appointments')
-  @ApiOperation({ summary: 'Get appointment by ID' })
-  findOne(@Param('id') id: string) {
-    return { message: `Appointment ${id}`, data: null };
+  async getAppointment(@Param('id') id: string) {
+    const appointment = await this.appointmentService.getAppointment(id);
+    return { appointment };
   }
 
-  @Patch(':id')
-  @Privileges('edit_appointments')
-  @ApiOperation({ summary: 'Update appointment' })
-  @ApiBody({ type: UpdateAppointmentDto })
-  update(@Param('id') id: string, @Body() updateDto: UpdateAppointmentDto) {
-    return { message: `Appointment ${id} updated`, data: updateDto };
+  @Put(':id')
+  async updateAppointment(@Param('id') id: string, @Body() updateData: Partial<Appointment>) {
+    const appointment = await this.appointmentService.updateAppointment(id, updateData);
+    return { message: 'Appointment updated', appointment };
   }
 
   @Delete(':id')
-  @Privileges('edit_appointments')
-  @ApiOperation({ summary: 'Delete appointment' })
-  remove(@Param('id') id: string) {
-    return { message: `Appointment ${id} deleted` };
+  async deleteAppointment(@Param('id') id: string) {
+    const deleted = await this.appointmentService.deleteAppointment(id);
+    return { message: 'Appointment deleted', deleted };
   }
 }

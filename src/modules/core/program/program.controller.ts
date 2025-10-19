@@ -1,28 +1,86 @@
-import { Controller, Get, Post, Body, Param, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
 import { ProgramService } from './services/program.service';
 import { Program, ProgramEnrollment } from './models/program.model';
 
-@Controller('programs')
+@Controller('api/programs')
 export class ProgramController {
   constructor(private readonly programService: ProgramService) {}
 
   @Post()
   async createProgram(@Body() createProgramDto: Omit<Program, 'id' | 'createdAt' | 'updatedAt'>) {
-    return this.programService.createProgram(createProgramDto);
+    const program = await this.programService.createProgram(createProgramDto);
+    return { message: 'Program created', program };
+  }
+
+  @Get('workflows')
+  async getProgramWorkflows() {
+    const workflows = await this.programService.getProgramWorkflows();
+    return { workflows };
   }
 
   @Post('enrollments')
   async enrollPatient(@Body() enrollmentDto: Omit<ProgramEnrollment, 'id' | 'createdAt' | 'updatedAt'>) {
-    return this.programService.enrollPatient(enrollmentDto);
+    const enrollment = await this.programService.enrollPatient(enrollmentDto);
+    return { message: 'Patient enrolled', enrollment };
   }
 
   @Get('enrollments/patient/:patientId')
   async getPatientEnrollments(@Param('patientId') patientId: string) {
-    return this.programService.getPatientEnrollments(patientId);
+    const enrollments = await this.programService.getPatientEnrollments(patientId);
+    return { enrollments, patientId };
+  }
+
+  @Get('enrollments/active')
+  async getActiveEnrollments() {
+    const enrollments = await this.programService.getActiveEnrollments();
+    return { enrollments };
+  }
+
+  @Get(':id/enrollments')
+  async getProgramEnrollments(@Param('id') programId: string) {
+    const enrollments = await this.programService.getProgramEnrollments(programId);
+    return { enrollments, programId };
   }
 
   @Put('enrollments/:id/complete')
-  async completeEnrollment(@Param('id') enrollmentId: string, @Body() data: { outcome?: string }) {
-    return this.programService.completeEnrollment(enrollmentId, data.outcome);
+  async completeEnrollment(@Param('id') enrollmentId: string, @Body() data: { outcome?: string; completionDate?: Date }) {
+    const enrollment = await this.programService.completeEnrollment(enrollmentId, data.outcome, data.completionDate);
+    return { message: 'Enrollment completed', enrollment };
+  }
+
+  @Put('enrollments/:id/state')
+  async changeEnrollmentState(@Param('id') enrollmentId: string, @Body() data: { stateId: string; startDate?: Date }) {
+    const stateChange = await this.programService.changeEnrollmentState(enrollmentId, data.stateId, data.startDate);
+    return { message: 'State changed', stateChange };
+  }
+
+  @Get('enrollments/:id/states')
+  async getEnrollmentStates(@Param('id') enrollmentId: string) {
+    const states = await this.programService.getEnrollmentStates(enrollmentId);
+    return { states, enrollmentId };
+  }
+
+  @Get()
+  async listPrograms() {
+    const programs = await this.programService.listPrograms();
+    return { programs };
+  }
+
+  @Get(':id')
+  async getProgram(@Param('id') id: string) {
+    const program = await this.programService.getProgram(id);
+    return { program };
+  }
+
+  @Put(':id')
+  async updateProgram(@Param('id') id: string, @Body() updateData: Partial<Program>) {
+    const program = await this.programService.updateProgram(id, updateData);
+    return { message: 'Program updated', program };
+  }
+
+  @Delete(':id')
+  async deleteProgram(@Param('id') id: string) {
+    const deleted = await this.programService.deleteProgram(id);
+    return { message: 'Program deleted', deleted };
   }
 }

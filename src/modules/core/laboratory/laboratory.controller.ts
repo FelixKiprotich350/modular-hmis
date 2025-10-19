@@ -1,61 +1,96 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
-import { AuthGuard } from '../../../core/guards/auth.guard';
-import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
-import { Privileges } from '../../../core/decorators/privileges.decorator';
+import { Controller, Get, Post, Body, Param, Put, Query } from '@nestjs/common';
+import { LaboratoryService } from './services/laboratory.service';
+import { Laboratory } from './models/laboratory.model';
 
-
-class CreateLaboratorDto {
-  name: string;
-  description?: string;
-}
-
-class UpdateLaboratorDto {
-  name?: string;
-  description?: string;
-}
-
-@ApiTags('Laboratory')
 @Controller('api/laboratory')
-@UseGuards(AuthGuard, PrivilegeGuard)
-@ApiBearerAuth()
 export class LaboratoryController {
-  @Post()
-  @Privileges('create_lab_orders')
-  @ApiOperation({ summary: 'Create laboratory order' })
-  @ApiResponse({ status: 201, description: 'Laboratory order created' })
-  @ApiBody({ type: CreateLaboratorDto })
-  create(@Body() createDto: CreateLaboratorDto) {
-    return { message: 'Laboratory created', data: createDto };
+  constructor(private readonly laboratoryService: LaboratoryService) {}
+
+  @Post('orders')
+  async createLabOrder(@Body() createOrderDto: Omit<Laboratory, 'id' | 'createdAt' | 'updatedAt'>) {
+    const order = await this.laboratoryService.createLabOrder(createOrderDto);
+    return { message: 'Lab order created', order };
   }
 
-  @Get()
-  @Privileges('view_lab_results')
-  @ApiOperation({ summary: 'Get all laboratory' })
-  @ApiResponse({ status: 200, description: 'List of laboratory' })
-  findAll() {
-    return { message: 'Laboratory API', data: [] };
+  @Get('tests')
+  async getLabTests() {
+    const tests = await this.laboratoryService.getLabTests();
+    return { tests };
   }
 
-  @Get(':id')
-  @Privileges('view_lab_results')
-  @ApiOperation({ summary: 'Get laboratory by ID' })
-  findOne(@Param('id') id: string) {
-    return { message: `Laboratory ${id}`, data: null };
+  @Get('tests/category/:category')
+  async getLabTestsByCategory(@Param('category') category: string) {
+    const tests = await this.laboratoryService.getLabTestsByCategory(category);
+    return { tests, category };
   }
 
-  @Patch(':id')
-  @Privileges('create_lab_orders')
-  @ApiOperation({ summary: 'Update laboratory order' })
-  @ApiBody({ type: UpdateLaboratorDto })
-  update(@Param('id') id: string, @Body() updateDto: UpdateLaboratorDto) {
-    return { message: `Laboratory ${id} updated`, data: updateDto };
+  @Get('orders/patient/:patientId')
+  async getPatientLabOrders(@Param('patientId') patientId: string, @Query('status') status?: string) {
+    const orders = await this.laboratoryService.getPatientLabOrders(patientId, status);
+    return { orders, patientId, status };
   }
 
-  @Delete(':id')
-  @Privileges('create_lab_orders')
-  @ApiOperation({ summary: 'Delete laboratory order' })
-  remove(@Param('id') id: string) {
-    return { message: `Laboratory ${id} deleted` };
+  @Get('orders/status/:status')
+  async getOrdersByStatus(@Param('status') status: string) {
+    const orders = await this.laboratoryService.getLabOrdersByStatus(status);
+    return { orders, status };
+  }
+
+  @Get('orders/pending')
+  async getPendingResults() {
+    const orders = await this.laboratoryService.getPendingResults();
+    return { orders };
+  }
+
+  @Get('results/abnormal')
+  async getAbnormalResults(@Query('patient') patientId?: string) {
+    const results = await this.laboratoryService.getAbnormalResults(patientId);
+    return { results, patientId };
+  }
+
+  @Post('specimens')
+  async createSpecimen(@Body() specimenData: { patientId: string; specimenType: string; collectedBy: string; barcode?: string }) {
+    const specimen = await this.laboratoryService.createSpecimen({
+      ...specimenData,
+      collectionDate: new Date(),
+      status: 'COLLECTED'
+    });
+    return { message: 'Specimen created', specimen };
+  }
+
+  @Get('specimens/barcode/:barcode')
+  async getSpecimenByBarcode(@Param('barcode') barcode: string) {
+    const specimen = await this.laboratoryService.getSpecimenByBarcode(barcode);
+    return { specimen, barcode };
+  }
+
+  @Put('orders/:id/collect')
+  async collectSpecimen(@Param('id') labOrderId: string, @Body() data: { collectedBy: string }) {
+    const order = await this.laboratoryService.collectSpecimen(labOrderId, data.collectedBy);
+    return { message: 'Specimen collected', order };
+  }
+
+  @Put('orders/:id/result')
+  async updateResult(@Param('id') id: string, @Body() data: { result: string; resultValue?: string; abnormal?: boolean }) {
+    const order = await this.laboratoryService.updateLabResult(id, data.result, data.resultValue, data.abnormal);
+    return { message: 'Result updated', order };
+  }
+
+  @Put('orders/:id/cancel')
+  async cancelOrder(@Param('id') id: string, @Body() data: { reason?: string }) {
+    const order = await this.laboratoryService.cancelLabOrder(id, data.reason);
+    return { message: 'Order cancelled', order };
+  }
+
+  @Get('orders')
+  async listOrders() {
+    const orders = await this.laboratoryService.listLabOrders();
+    return { orders };
+  }
+
+  @Get('orders/:id')
+  async getOrder(@Param('id') id: string) {
+    const order = await this.laboratoryService.getLabOrder(id);
+    return { order };
   }
 }

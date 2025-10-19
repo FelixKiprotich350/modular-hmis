@@ -1,15 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-
-export interface Location {
-  id: string;
-  name: string;
-  description?: string;
-  address?: string;
-  parentLocationId?: string;
-  tags?: string[];
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { Location, LocationTag, LocationAttribute } from '../models/location.model';
 
 export class LocationService {
   constructor(private db: PrismaClient) {}
@@ -24,6 +14,49 @@ export class LocationService {
   }
 
   async getLocation(id: string): Promise<Location | null> {
+    return null;
+  }
+
+  async getLocationHierarchy(id: string): Promise<Location[]> {
+    return [];
+  }
+
+  async getChildLocations(parentId: string): Promise<Location[]> {
+    return [];
+  }
+
+  async searchLocations(query: string): Promise<Location[]> {
+    return [];
+  }
+
+  async getLocationsByTag(tagId: string): Promise<Location[]> {
+    return [];
+  }
+
+  async addLocationAttribute(locationId: string, attributeTypeId: string, value: string): Promise<LocationAttribute> {
+    return {
+      id: 'attr_' + Date.now(),
+      locationId,
+      attributeTypeId,
+      value,
+      createdAt: new Date()
+    };
+  }
+
+  async getLocationAttributes(locationId: string): Promise<LocationAttribute[]> {
+    return [];
+  }
+
+  async getLocationTags(): Promise<LocationTag[]> {
+    return [
+      { id: '1', name: 'Hospital', description: 'Hospital facility', retired: false },
+      { id: '2', name: 'Clinic', description: 'Outpatient clinic', retired: false },
+      { id: '3', name: 'Pharmacy', description: 'Pharmacy location', retired: false },
+      { id: '4', name: 'Laboratory', description: 'Laboratory facility', retired: false }
+    ];
+  }
+
+  async retireLocation(locationId: string, reason?: string): Promise<Location | null> {
     return null;
   }
 

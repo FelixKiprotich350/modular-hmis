@@ -4,13 +4,19 @@ import { Observation, ObservationGroup } from '../models/observation.model';
 export class ObservationService {
   constructor(private db: PrismaClient) {}
 
-  async createObservation(data: Omit<Observation, 'id' | 'createdAt' | 'updatedAt'>): Promise<Observation> {
-    return {
-      id: 'obs_' + Date.now(),
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+  async createObservation(data: Omit<Observation, 'id' | 'createdAt' | 'updatedAt'>): Promise<any> {
+    return await this.db.observation.create({
+      data,
+      include: {
+        patient: {
+          include: {
+            person: true
+          }
+        },
+        encounter: true,
+        concept: true
+      }
+    });
   }
 
   async createObservationGroup(patientId: string, encounterId: string, conceptId: string, observations: Omit<Observation, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<ObservationGroup> {
@@ -36,16 +42,52 @@ export class ObservationService {
     return null;
   }
 
-  async getPatientObservations(patientId: string, conceptId?: string): Promise<Observation[]> {
-    return [];
+  async getPatientObservations(patientId: string, conceptId?: string): Promise<any[]> {
+    const where: any = { patientId };
+    if (conceptId) {
+      where.conceptId = conceptId;
+    }
+    
+    return await this.db.observation.findMany({
+      where,
+      include: {
+        concept: true,
+        encounter: true
+      },
+      orderBy: {
+        obsDate: 'desc'
+      }
+    });
   }
 
-  async getEncounterObservations(encounterId: string): Promise<Observation[]> {
-    return [];
+  async getEncounterObservations(encounterId: string): Promise<any[]> {
+    return await this.db.observation.findMany({
+      where: { encounterId },
+      include: {
+        concept: true,
+        patient: {
+          include: {
+            person: true
+          }
+        }
+      }
+    });
   }
 
-  async getObservationsByConcept(conceptId: string): Promise<Observation[]> {
-    return [];
+  async getObservationsByConcept(conceptId: string): Promise<any[]> {
+    return await this.db.observation.findMany({
+      where: { conceptId },
+      include: {
+        patient: {
+          include: {
+            person: true
+          }
+        },
+        encounter: true,
+        concept: true
+      },
+      take: 100
+    });
   }
 
   async getObservationsByDateRange(patientId: string, startDate: Date, endDate: Date): Promise<Observation[]> {

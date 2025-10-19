@@ -33,86 +33,117 @@ export interface PatientSearchCriteria {
 export class PatientService {
   constructor(private db: PrismaClient) {}
 
-  async registerPatient(data: PatientRegistrationData): Promise<Patient> {
-    const personId = 'person_' + Date.now();
-    const patientId = 'patient_' + Date.now();
-    
-    // Generate or use custom identifier
+  async registerPatient(data: PatientRegistrationData): Promise<any> {
     const identifier = data.customIdentifier || await this.generatePatientId(data.identifierTypeId);
     
-    // Check for duplicates
     const existing = await this.findDuplicates(data);
     if (existing.length > 0) {
       throw new Error(`Potential duplicate found: ${existing.length} similar patients`);
     }
 
-    const patient: Patient = {
-      id: patientId,
-      personId,
-      identifiers: [{
-        id: 'ident_' + Date.now(),
-        patientId,
-        identifierTypeId: data.identifierTypeId,
-        identifier,
-        preferred: true,
-        createdAt: new Date()
-      }],
-      person: {
-        id: personId,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        middleName: data.middleName,
-        gender: data.gender,
-        birthdate: data.birthdate,
-        birthdateEstimated: data.birthdateEstimated || false,
-        dead: false,
-        addresses: data.address1 ? [{
-          id: 'addr_' + Date.now(),
-          personId,
-          preferred: true,
-          address1: data.address1,
-          address2: data.address2,
-          cityVillage: data.cityVillage,
-          stateProvince: data.stateProvince,
-          country: data.country,
-          postalCode: data.postalCode,
-          createdAt: new Date()
-        }] : [],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+    return await this.db.$transaction(async (tx) => {
+      const person = await tx.person.create({
+        data: {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          middleName: data.middleName,
+          gender: data.gender,
+          birthdate: data.birthdate,
+          birthdateEstimated: data.birthdateEstimated || false,
+          dead: false
+        }
+      });
 
-    return patient;
+      const patient = await tx.patient.create({
+        data: {
+          personId: person.id,
+          identifiers: {
+            create: {
+              identifierTypeId: data.identifierTypeId,
+              identifier,
+              preferred: true
+            }
+          }
+        },
+        include: {
+          person: true,
+          identifiers: true
+        }
+      });
+
+      if (data.address1) {
+        await tx.personAddress.create({
+          data: {
+            personId: person.id,
+            preferred: true,
+            address1: data.address1,
+            address2: data.address2,
+            cityVillage: data.cityVillage,
+            stateProvince: data.stateProvince,
+            country: data.country,
+            postalCode: data.postalCode
+          }
+        });
+      }
+
+      return patient;
+    });
   }
 
-  async searchPatients(criteria: PatientSearchCriteria): Promise<Patient[]> {
-    const results: Patient[] = [];
+  async searchPatients(criteria: PatientSearchCriteria): Promise<any[]> {
+    const where: any = {};
     
-    // Mock search implementation
     if (criteria.identifier) {
-      const patient = await this.getPatientByIdentifier(criteria.identifier);
-      if (patient) results.push(patient);
+      where.identifiers = {
+        some: {
+          identifier: {
+            contains: criteria.identifier,
+            mode: 'insensitive'
+          }
+        }
+      };
     }
     
-    return results.slice(criteria.offset || 0, (criteria.offset || 0) + (criteria.limit || 20));
+    if (criteria.name) {
+      where.person = {
+        OR: [
+          { firstName: { contains: criteria.name, mode: 'insensitive' } },
+          { lastName: { contains: criteria.name, mode: 'insensitive' } }
+        ]
+      };
+    }
+    
+    if (criteria.gender) {
+      where.person = { ...where.person, gender: criteria.gender };
+    }
+    
+    return await this.db.patient.findMany({
+      where,
+      include: {
+        person: true,
+        identifiers: true
+      },
+      skip: criteria.offset || 0,
+      take: criteria.limit || 20
+    });
   }
 
-  async findDuplicates(data: PatientRegistrationData): Promise<Patient[]> {
-    // Mock duplicate detection
-    const duplicates: Patient[] = [];
-    
-    // Check by name + birthdate
-    if (data.firstName && data.lastName && data.birthdate) {
-      // Would search for similar names and birthdates
-    }
-    
-    // Check by phone
-    if (data.phone) {
-      // Would search for existing phone numbers
-    }
+  async findDuplicates(data: PatientRegistrationData): Promise<any[]> {
+    const duplicates = await this.db.patient.findMany({
+      where: {
+        person: {
+          AND: [
+            { firstName: { equals: data.firstName, mode: 'insensitive' } },
+            { lastName: { equals: data.lastName, mode: 'insensitive' } },
+            data.birthdate ? { birthdate: data.birthdate } : {}
+          ]
+        }
+      },
+      include: {
+        person: true,
+        identifiers: true
+      }
+    });
     
     return duplicates;
   }
@@ -131,31 +162,61 @@ export class PatientService {
     return this.registerPatient(registrationData);
   }
 
-  async getPatient(id: string): Promise<Patient | null> {
-    return null;
+  async getPatient(id: string): Promise<any> {
+    return await this.db.patient.findUnique({
+      where: { id },
+      include: {
+        person: {
+          include: {
+            addresses: true,
+            attributes: true
+          }
+        },
+        identifiers: true
+      }
+    });
   }
 
-  async getPatientByIdentifier(identifier: string): Promise<Patient | null> {
-    return null;
+  async getPatientByIdentifier(identifier: string): Promise<any> {
+    return await this.db.patient.findFirst({
+      where: {
+        identifiers: {
+          some: {
+            identifier
+          }
+        }
+      },
+      include: {
+        person: true,
+        identifiers: true
+      }
+    });
   }
 
-  async addIdentifier(patientId: string, identifierTypeId: string, identifier: string): Promise<PatientIdentifier> {
-    return {
-      id: 'ident_' + Date.now(),
-      patientId,
-      identifierTypeId,
-      identifier,
-      preferred: false,
-      createdAt: new Date()
-    };
+  async addIdentifier(patientId: string, identifierTypeId: string, identifier: string): Promise<any> {
+    return await this.db.patientIdentifier.create({
+      data: {
+        patientId,
+        identifierTypeId,
+        identifier,
+        preferred: false
+      }
+    });
   }
 
   private async generatePatientId(identifierTypeId: string): Promise<string> {
-    return 'P' + Date.now();
+    const count = await this.db.patient.count();
+    return `P${(count + 1).toString().padStart(6, '0')}`;
   }
 
-  async listPatients(): Promise<Patient[]> {
-    return [];
+  async listPatients(): Promise<any[]> {
+    return await this.db.patient.findMany({
+      include: {
+        person: true,
+        identifiers: true
+      },
+      take: 50
+    });
   }
 
   async updatePatient(id: string, data: Partial<Patient>): Promise<Patient | null> {

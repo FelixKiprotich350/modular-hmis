@@ -4,25 +4,65 @@ import { Encounter, EncounterType, Observation } from '../models/encounter.model
 export class EncounterService {
   constructor(private db: PrismaClient) {}
 
-  async createEncounter(data: Omit<Encounter, 'id' | 'createdAt' | 'updatedAt'>): Promise<Encounter> {
-    return {
-      id: 'encounter_' + Date.now(),
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+  async createEncounter(data: Omit<Encounter, 'id' | 'createdAt' | 'updatedAt'>): Promise<any> {
+    return await this.db.encounter.create({
+      data,
+      include: {
+        patient: {
+          include: {
+            person: true
+          }
+        },
+        provider: {
+          include: {
+            person: true
+          }
+        },
+        location: true
+      }
+    });
   }
 
-  async getEncounter(id: string): Promise<Encounter | null> {
-    return null;
+  async getEncounter(id: string): Promise<any> {
+    return await this.db.encounter.findUnique({
+      where: { id },
+      include: {
+        patient: {
+          include: {
+            person: true
+          }
+        },
+        provider: true,
+        location: true,
+        observations: {
+          include: {
+            concept: true
+          }
+        }
+      }
+    });
   }
 
-  async getEncounterWithObservations(id: string): Promise<Encounter | null> {
-    return null;
+  async getEncounterWithObservations(id: string): Promise<any> {
+    return await this.getEncounter(id);
   }
 
-  async getPatientEncounters(patientId: string): Promise<Encounter[]> {
-    return [];
+  async getPatientEncounters(patientId: string): Promise<any[]> {
+    return await this.db.encounter.findMany({
+      where: { patientId },
+      include: {
+        provider: true,
+        location: true,
+        observations: {
+          include: {
+            concept: true
+          }
+        }
+      },
+      orderBy: {
+        startDate: 'desc'
+      }
+    });
   }
 
   async getEncountersByType(encounterType: string): Promise<Encounter[]> {

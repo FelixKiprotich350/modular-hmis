@@ -4,50 +4,99 @@ import { Concept, ConceptAnswer } from '../models/concept.model';
 export class ConceptService {
   constructor(private db: PrismaClient) {}
 
-  async createConcept(data: Omit<Concept, 'id' | 'createdAt' | 'updatedAt'>): Promise<Concept> {
-    return {
-      id: 'concept_' + Date.now(),
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date()
+  async createConcept(data: Omit<Concept, 'id' | 'createdAt' | 'updatedAt'>): Promise<any> {
+    return await this.db.concept.create({
+      data
+    });
+  }
+
+  async getConcept(id: string): Promise<any> {
+    return await this.db.concept.findUnique({
+      where: { id },
+      include: {
+        answers: {
+          include: {
+            answer: true
+          }
+        }
+      }
+    });
+  }
+
+  async getConceptByName(name: string): Promise<any> {
+    return await this.db.concept.findFirst({
+      where: {
+        name: {
+          equals: name,
+          mode: 'insensitive'
+        }
+      }
+    });
+  }
+
+  async searchConcepts(query: string, datatype?: string): Promise<any[]> {
+    const where: any = {
+      name: {
+        contains: query,
+        mode: 'insensitive'
+      },
+      retired: false
     };
+    
+    if (datatype) {
+      where.datatype = datatype;
+    }
+    
+    return await this.db.concept.findMany({
+      where,
+      take: 50
+    });
   }
 
-  async getConcept(id: string): Promise<Concept | null> {
-    return null;
+  async addConceptAnswer(conceptId: string, answerConceptId: string, sortWeight?: number): Promise<any> {
+    return await this.db.conceptAnswer.create({
+      data: {
+        conceptId,
+        answerConcept: answerConceptId,
+        sortWeight
+      }
+    });
   }
 
-  async getConceptByName(name: string): Promise<Concept | null> {
-    return null;
+  async getConceptAnswers(conceptId: string): Promise<any[]> {
+    return await this.db.conceptAnswer.findMany({
+      where: { conceptId },
+      include: {
+        answer: true
+      }
+    });
   }
 
-  async searchConcepts(query: string, datatype?: string): Promise<Concept[]> {
-    return [];
+  async getConceptsByClass(conceptClass: string): Promise<any[]> {
+    return await this.db.concept.findMany({
+      where: {
+        conceptClass,
+        retired: false
+      }
+    });
   }
 
-  async addConceptAnswer(conceptId: string, answerConceptId: string, sortWeight?: number): Promise<ConceptAnswer> {
-    return {
-      id: 'answer_' + Date.now(),
-      conceptId,
-      answerConcept: answerConceptId,
-      sortWeight
-    };
+  async getConceptsByDatatype(datatype: string): Promise<any[]> {
+    return await this.db.concept.findMany({
+      where: {
+        datatype,
+        retired: false
+      }
+    });
   }
 
-  async getConceptAnswers(conceptId: string): Promise<ConceptAnswer[]> {
-    return [];
-  }
-
-  async getConceptsByClass(conceptClass: string): Promise<Concept[]> {
-    return [];
-  }
-
-  async getConceptsByDatatype(datatype: string): Promise<Concept[]> {
-    return [];
-  }
-
-  async listConcepts(): Promise<Concept[]> {
-    return [];
+  async listConcepts(): Promise<any[]> {
+    return await this.db.concept.findMany({
+      where: {
+        retired: false
+      },
+      take: 100
+    });
   }
 
   async updateConcept(id: string, data: Partial<Concept>): Promise<Concept | null> {

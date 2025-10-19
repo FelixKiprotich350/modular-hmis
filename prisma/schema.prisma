@@ -146,6 +146,10 @@ model Patient {
   observations  Observation[]
   prescriptions Prescription[]
   billings      Billing[]
+  drugOrders    DrugOrder[]
+  orders        Order[]
+  enrollments   ProgramEnrollment[]
+  cohortMembers CohortMember[]
   person        Person              @relation(fields: [personId], references: [id])
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
@@ -229,14 +233,28 @@ model Provider {
 }
 
 model Location {
-  id          String        @id @default(cuid())
+  id          String              @id @default(cuid())
   name        String
+  description String?
   address     String?
+  cityVillage String?
+  stateProvince String?
+  country     String?
+  postalCode  String?
+  latitude    Float?
+  longitude   Float?
+  parentLocationId String?
+  retired     Boolean             @default(false)
   phone       String?
   encounters  Encounter[]
   appointments Appointment[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  enrollments ProgramEnrollment[]
+  parent      Location?           @relation("LocationHierarchy", fields: [parentLocationId], references: [id])
+  children    Location[]          @relation("LocationHierarchy")
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([parentLocationId])
 }
 
 model Encounter {
@@ -253,6 +271,7 @@ model Encounter {
   location     Location?     @relation(fields: [locationId], references: [id])
   observations Observation[]
   visits       Visit[]
+  orders       Order[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
@@ -292,6 +311,7 @@ model Concept {
   questions    ConceptAnswer[] @relation("ConceptQuestions")
   observations Observation[]
   formFields   FormField[]
+  orders       Order[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -363,6 +383,150 @@ model AddressHierarchyEntry {
 
   @@index([levelId])
   @@index([parentId])
+}
+
+model Drug {
+  id          String      @id @default(cuid())
+  name        String
+  genericName String?
+  strength    String?
+  dosageForm  String
+  units       String?
+  concept     String?
+  retired     Boolean     @default(false)
+  drugOrders  DrugOrder[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model DrugOrder {
+  id            String   @id @default(cuid())
+  patientId     String
+  drugId        String
+  orderId       String?
+  dose          Float?
+  doseUnits     String?
+  frequency     String?
+  quantity      Float?
+  quantityUnits String?
+  duration      Int?
+  durationUnits String?
+  route         String?
+  instructions  String?
+  startDate     DateTime
+  endDate       DateTime?
+  status        String   @default("ACTIVE")
+  patient       Patient  @relation(fields: [patientId], references: [id])
+  drug          Drug     @relation(fields: [drugId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([drugId])
+}
+
+model Order {
+  id              String   @id @default(cuid())
+  patientId       String
+  encounterId     String?
+  orderTypeId     String
+  conceptId       String
+  orderer         String
+  urgency         String   @default("ROUTINE")
+  instructions    String?
+  startDate       DateTime
+  autoExpireDate  DateTime?
+  discontinued    Boolean  @default(false)
+  discontinuedDate DateTime?
+  discontinuedReason String?
+  status          String   @default("NEW")
+  patient         Patient  @relation(fields: [patientId], references: [id])
+  encounter       Encounter? @relation(fields: [encounterId], references: [id])
+  concept         Concept  @relation(fields: [conceptId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([encounterId])
+}
+
+model Program {
+  id          String              @id @default(cuid())
+  name        String              @unique
+  description String?
+  concept     String?
+  retired     Boolean             @default(false)
+  enrollments ProgramEnrollment[]
+  workflows   ProgramWorkflow[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model ProgramWorkflow {
+  id        String                 @id @default(cuid())
+  programId String
+  concept   String
+  retired   Boolean                @default(false)
+  program   Program                @relation(fields: [programId], references: [id])
+  states    ProgramWorkflowState[]
+  createdAt DateTime               @default(now())
+
+  @@index([programId])
+}
+
+model ProgramWorkflowState {
+  id                 String          @id @default(cuid())
+  programWorkflowId  String
+  concept            String
+  initial            Boolean         @default(false)
+  terminal           Boolean         @default(false)
+  retired            Boolean         @default(false)
+  programWorkflow    ProgramWorkflow @relation(fields: [programWorkflowId], references: [id])
+
+  @@index([programWorkflowId])
+}
+
+model ProgramEnrollment {
+  id            String    @id @default(cuid())
+  patientId     String
+  programId     String
+  dateEnrolled  DateTime
+  dateCompleted DateTime?
+  locationId    String?
+  outcome       String?
+  voided        Boolean   @default(false)
+  patient       Patient   @relation(fields: [patientId], references: [id])
+  program       Program   @relation(fields: [programId], references: [id])
+  location      Location? @relation(fields: [locationId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([patientId])
+  @@index([programId])
+}
+
+model Cohort {
+  id          String         @id @default(cuid())
+  name        String         @unique
+  description String?
+  members     CohortMember[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model CohortMember {
+  id        String   @id @default(cuid())
+  cohortId  String
+  patientId String
+  startDate DateTime
+  endDate   DateTime?
+  cohort    Cohort   @relation(fields: [cohortId], references: [id])
+  patient   Patient  @relation(fields: [patientId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([cohortId, patientId])
+  @@index([cohortId])
+  @@index([patientId])
 }
 
 model Observation {

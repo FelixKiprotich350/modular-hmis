@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Query, Inject } from '@nestjs/common';
 import { CohortService } from './services/cohort.service';
 import { Cohort, CohortDefinition } from './models/cohort.model';
 
 @Controller('api/cohorts')
 export class CohortController {
-  constructor(private readonly cohortService: CohortService) {}
+  constructor(@Inject('cohortService') private readonly cohortService: CohortService) {}
 
   @Post()
   async createCohort(@Body() createCohortDto: Omit<Cohort, 'id' | 'createdAt' | 'updatedAt'>) {

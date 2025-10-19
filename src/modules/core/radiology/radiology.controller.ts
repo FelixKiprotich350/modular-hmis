@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Body, Param, Put, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Query, Inject } from '@nestjs/common';
 import { RadiologyService } from './services/radiology.service';
 import { Radiology } from './models/radiology.model';
 
 @Controller('api/radiology')
 export class RadiologyController {
-  constructor(private readonly radiologyService: RadiologyService) {}
+  constructor(@Inject('radiologyService') private readonly radiologyService: RadiologyService) {}
 
   @Post('orders')
   async createRadiologyOrder(@Body() createOrderDto: Omit<Radiology, 'id' | 'createdAt' | 'updatedAt'>) {

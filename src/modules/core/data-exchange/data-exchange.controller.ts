@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Query, Inject } from '@nestjs/common';
 import { DataExchangeService } from './services/data-exchange.service';
 import { DataExport, DataImport, ETLJob } from './models/data-exchange.model';
 
 @Controller('api/data-exchange')
 export class DataExchangeController {
-  constructor(private readonly dataExchangeService: DataExchangeService) {}
+  constructor(@Inject('dataExchangeService') private readonly dataExchangeService: DataExchangeService) {}
 
   @Get('formats')
   async getDataFormats() {

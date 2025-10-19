@@ -121,7 +121,7 @@ export class ProviderService {
     });
   }
 
-  async updateProvider(id: string, data: Partial<Provider>): Promise<any> {
+  async updateProvider(id: string, data: any): Promise<any> {
     return await this.db.provider.update({
       where: { id },
       data,

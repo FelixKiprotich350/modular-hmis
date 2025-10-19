@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, Inject } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { AuthGuard } from '../../../core/guards/auth.guard';
 import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
@@ -13,7 +13,7 @@ import { UpdatePatientDto } from './dto/update-patient.dto';
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class PatientsController {
-  constructor(private readonly patientService: PatientService) {}
+  constructor(@Inject('patientsService') private readonly patientService: PatientService) {}
 
   @Post('register')
   @Privileges('create_patients')
@@ -113,7 +113,7 @@ export class PatientsController {
   @ApiOperation({ summary: 'Update patient' })
   @ApiBody({ type: UpdatePatientDto })
   async update(@Param('id') id: string, @Body() updatePatientDto: UpdatePatientDto) {
-    const patient = await this.patientService.updatePatient(id, updatePatientDto);
+    const patient = await this.patientService.updatePatient(id, updatePatientDto as any);
     return { message: 'Patient updated', patient };
   }
 

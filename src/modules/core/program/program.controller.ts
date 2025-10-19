@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Inject } from '@nestjs/common';
 import { ProgramService } from './services/program.service';
 import { Program, ProgramEnrollment } from './models/program.model';
 
 @Controller('api/programs')
 export class ProgramController {
-  constructor(private readonly programService: ProgramService) {}
+  constructor(@Inject('programService') private readonly programService: ProgramService) {}
 
   @Post()
   async createProgram(@Body() createProgramDto: Omit<Program, 'id' | 'createdAt' | 'updatedAt'>) {

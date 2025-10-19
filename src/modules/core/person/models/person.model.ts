@@ -28,3 +28,16 @@ export interface PersonAttributeType {
   format: string;
   required: boolean;
 }
+
+export interface PersonAddress {
+  id: string;
+  personId: string;
+  address1: string;
+  address2?: string;
+  cityVillage: string;
+  stateProvince?: string;
+  country: string;
+  postalCode?: string;
+  preferred: boolean;
+  createdAt: Date;
+}

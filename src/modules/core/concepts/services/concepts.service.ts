@@ -5,8 +5,9 @@ export class ConceptService {
   constructor(private db: PrismaClient) {}
 
   async createConcept(data: Omit<Concept, 'id' | 'createdAt' | 'updatedAt'>): Promise<any> {
+    const { answers, ...conceptData } = data;
     return await this.db.concept.create({
-      data
+      data: conceptData as any
     });
   }
 

@@ -33,7 +33,7 @@ export class FormService {
     return {
       id: 'formfield_' + Date.now(),
       formId,
-      conceptId,
+
       fieldNumber,
       required,
       sortWeight: fieldNumber

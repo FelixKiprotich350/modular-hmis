@@ -6,7 +6,7 @@ export class EncounterService {
 
   async createEncounter(data: Omit<Encounter, 'id' | 'createdAt' | 'updatedAt'>): Promise<any> {
     return await this.db.encounter.create({
-      data,
+      data: data as any,
       include: {
         patient: {
           include: {
@@ -184,7 +184,7 @@ export class EncounterService {
   async updateEncounter(id: string, data: Partial<Encounter>): Promise<any> {
     return await this.db.encounter.update({
       where: { id },
-      data
+      data: data as any
     });
   }
 

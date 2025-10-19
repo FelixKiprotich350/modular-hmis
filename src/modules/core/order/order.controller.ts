@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Query, Inject } from '@nestjs/common';
 import { OrderService } from './services/order.service';
 import { Order } from './models/order.model';
 
 @Controller('api/orders')
 export class OrderController {
-  constructor(private readonly orderService: OrderService) {}
+  constructor(@Inject('orderService') private readonly orderService: OrderService) {}
 
   @Post()
   async createOrder(@Body() createOrderDto: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) {

@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Query, Inject } from '@nestjs/common';
 import { FormService } from './services/form.service';
 import { Form } from './models/form.model';
 
 @Controller('api/forms')
 export class FormController {
-  constructor(private readonly formService: FormService) {}
+  constructor(@Inject('formService') private readonly formService: FormService) {}
 
   @Post()
   async createForm(@Body() createFormDto: Omit<Form, 'id' | 'createdAt' | 'updatedAt'>) {

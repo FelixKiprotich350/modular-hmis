@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Query, Inject } from '@nestjs/common';
 import { AppointmentService } from './services/appointments.service';
 import { Appointment } from './models/appointment.model';
 
 @Controller('api/appointments')
 export class AppointmentsController {
-  constructor(private readonly appointmentService: AppointmentService) {}
+  constructor(@Inject('appointmentsService') private readonly appointmentService: AppointmentService) {}
 
   @Post()
   async createAppointment(@Body() createAppointmentDto: Omit<Appointment, 'id' | 'createdAt' | 'updatedAt'>) {

@@ -1,8 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiProperty } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, Inject } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '../../../core/guards/auth.guard';
 import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
 import { Privileges } from '../../../core/decorators/privileges.decorator';
+import { Audit } from '../../../core/decorators/audit.decorator';
+import { User } from '../../../core/decorators/user.decorator';
+import { PharmacyService } from './services/pharmacy.service';
 import { CreatePharmacyDto } from './dto/create-pharmacy.dto';
 import { UpdatePharmacyDto } from './dto/update-pharmacy.dto';
 
@@ -11,42 +14,136 @@ import { UpdatePharmacyDto } from './dto/update-pharmacy.dto';
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class PharmacyController {
-  @Post()
+  constructor(@Inject('pharmacyService') private readonly pharmacyService: PharmacyService) {}
+
+  @Post('prescriptions')
   @Privileges('manage_pharmacy')
+  @Audit('Create prescription')
   @ApiOperation({ summary: 'Create prescription' })
-  @ApiResponse({ status: 201, description: 'Prescription created' })
+  @ApiResponse({ status: 201, description: 'Prescription created successfully' })
   @ApiBody({ type: CreatePharmacyDto })
-  create(@Body() createDto: CreatePharmacyDto) {
-    return { message: 'Prescription created', data: createDto };
+  async createPrescription(@Body() createDto: CreatePharmacyDto) {
+    const prescription = await this.pharmacyService.createPrescription(createDto);
+    return { success: true, data: prescription };
   }
 
-  @Get()
+  @Get('prescriptions')
   @Privileges('view_pharmacy')
-  @ApiOperation({ summary: 'Get all pharmacy' })
-  @ApiResponse({ status: 200, description: 'List of pharmacy' })
-  findAll() {
-    return { message: 'Pharmacy API', data: [] };
+  @ApiOperation({ summary: 'Get all prescriptions' })
+  @ApiResponse({ status: 200, description: 'List of prescriptions retrieved successfully' })
+  @ApiQuery({ name: 'patientId', required: false, description: 'Filter by patient ID' })
+  @ApiQuery({ name: 'status', required: false, description: 'Filter by prescription status' })
+  async findAllPrescriptions(@Query('patientId') patientId?: string, @Query('status') status?: string) {
+    if (patientId) {
+      const prescriptions = await this.pharmacyService.getPatientPrescriptions(patientId, status);
+      return { success: true, data: prescriptions };
+    }
+    const prescriptions = await this.pharmacyService.listPrescriptions();
+    return { success: true, data: prescriptions };
   }
 
-  @Get(':id')
+  @Get('prescriptions/pending')
   @Privileges('view_pharmacy')
-  @ApiOperation({ summary: 'Get pharmacy by ID' })
-  findOne(@Param('id') id: string) {
-    return { message: `Pharmacy ${id}`, data: null };
+  @ApiOperation({ summary: 'Get pending prescriptions' })
+  @ApiResponse({ status: 200, description: 'Pending prescriptions retrieved successfully' })
+  async getPendingPrescriptions() {
+    const prescriptions = await this.pharmacyService.getPendingPrescriptions();
+    return { success: true, data: prescriptions };
   }
 
-  @Patch(':id')
+  @Get('medications/search')
+  @Privileges('view_pharmacy')
+  @ApiOperation({ summary: 'Search medications' })
+  @ApiResponse({ status: 200, description: 'Medications found successfully' })
+  @ApiQuery({ name: 'q', required: true, description: 'Search query' })
+  async searchMedications(@Query('q') query: string) {
+    const medications = await this.pharmacyService.searchMedications(query);
+    return { success: true, data: medications };
+  }
+
+  @Post('drug-interactions')
+  @Privileges('view_pharmacy')
+  @ApiOperation({ summary: 'Check drug interactions' })
+  @ApiResponse({ status: 200, description: 'Drug interactions checked successfully' })
+  async checkDrugInteractions(@Body() data: { medications: string[] }) {
+    const interactions = await this.pharmacyService.getDrugInteractions(data.medications);
+    return { success: true, data: interactions };
+  }
+
+  @Get('reports')
+  @Privileges('view_pharmacy')
+  @ApiOperation({ summary: 'Generate pharmacy report' })
+  @ApiResponse({ status: 200, description: 'Pharmacy report generated successfully' })
+  @ApiQuery({ name: 'startDate', required: true, description: 'Report start date' })
+  @ApiQuery({ name: 'endDate', required: true, description: 'Report end date' })
+  async generateReport(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
+    const report = await this.pharmacyService.generatePharmacyReport(new Date(startDate), new Date(endDate));
+    return { success: true, data: report };
+  }
+
+  @Get('prescriptions/:id')
+  @Privileges('view_pharmacy')
+  @ApiOperation({ summary: 'Get prescription by ID' })
+  @ApiResponse({ status: 200, description: 'Prescription retrieved successfully' })
+  async findOnePrescription(@Param('id') id: string) {
+    const prescription = await this.pharmacyService.getPrescription(id);
+    return { success: true, data: prescription };
+  }
+
+  @Post('prescriptions/:id/dispense')
   @Privileges('manage_pharmacy')
-  @ApiOperation({ summary: 'Update pharmacy' })
+  @Audit('Dispense medication')
+  @ApiOperation({ summary: 'Dispense medication' })
+  @ApiResponse({ status: 200, description: 'Medication dispensed successfully' })
+  async dispenseMedication(
+    @Param('id') id: string,
+    @Body() dispensationData: {
+      quantityDispensed: number;
+      notes?: string;
+    },
+    @User() user: any
+  ) {
+    const result = await this.pharmacyService.dispenseMedication(
+      id,
+      user.id,
+      dispensationData.quantityDispensed,
+      dispensationData.notes
+    );
+    return { success: true, data: result };
+  }
+
+  @Post('prescriptions/:id/refill')
+  @Privileges('manage_pharmacy')
+  @Audit('Refill prescription')
+  @ApiOperation({ summary: 'Refill prescription' })
+  @ApiResponse({ status: 201, description: 'Prescription refilled successfully' })
+  async refillPrescription(
+    @Param('id') id: string,
+    @Body() refillData: { quantity: number },
+    @User() user: any
+  ) {
+    const refill = await this.pharmacyService.refillPrescription(id, refillData.quantity, user.id);
+    return { success: true, data: refill };
+  }
+
+  @Patch('prescriptions/:id')
+  @Privileges('manage_pharmacy')
+  @Audit('Update prescription')
+  @ApiOperation({ summary: 'Update prescription' })
+  @ApiResponse({ status: 200, description: 'Prescription updated successfully' })
   @ApiBody({ type: UpdatePharmacyDto })
-  update(@Param('id') id: string, @Body() updateDto: UpdatePharmacyDto) {
-    return { message: `Pharmacy ${id} updated`, data: updateDto };
+  async updatePrescription(@Param('id') id: string, @Body() updateDto: UpdatePharmacyDto) {
+    const prescription = await this.pharmacyService.updatePrescription(id, updateDto);
+    return { success: true, data: prescription };
   }
 
-  @Delete(':id')
+  @Delete('prescriptions/:id')
   @Privileges('manage_pharmacy')
-  @ApiOperation({ summary: 'Delete pharmacy' })
-  remove(@Param('id') id: string) {
-    return { message: `Pharmacy ${id} deleted` };
+  @Audit('Delete prescription')
+  @ApiOperation({ summary: 'Delete prescription' })
+  @ApiResponse({ status: 200, description: 'Prescription deleted successfully' })
+  async removePrescription(@Param('id') id: string) {
+    await this.pharmacyService.deletePrescription(id);
+    return { success: true, message: 'Prescription deleted successfully' };
   }
 }

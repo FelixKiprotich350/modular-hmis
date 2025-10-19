@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, Inject } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { AuthGuard } from '../../../core/guards/auth.guard';
 import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
@@ -29,7 +29,7 @@ class UpdateConceptDto {
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class ConceptsController {
-  constructor(private readonly conceptService: ConceptService) {}
+  constructor(@Inject('conceptsService') private readonly conceptsService: ConceptService) {}
 
   @Post()
   @Privileges('manage_concepts')
@@ -37,7 +37,7 @@ export class ConceptsController {
   @ApiResponse({ status: 201, description: 'Concept created' })
   @ApiBody({ type: CreateConceptDto })
   async create(@Body() createDto: CreateConceptDto) {
-    const concept = await this.conceptService.createConcept(createDto);
+    const concept = await this.conceptsService.createConcept({ ...createDto, retired: false });
     return { message: 'Concept created', concept };
   }
 
@@ -45,7 +45,7 @@ export class ConceptsController {
   @Privileges('manage_concepts')
   @ApiOperation({ summary: 'Search concepts' })
   async search(@Query('q') query: string, @Query('datatype') datatype?: string) {
-    const concepts = await this.conceptService.searchConcepts(query, datatype);
+    const concepts = await this.conceptsService.searchConcepts(query, datatype);
     return { concepts, query };
   }
 
@@ -53,7 +53,7 @@ export class ConceptsController {
   @Privileges('manage_concepts')
   @ApiOperation({ summary: 'Get concepts by class' })
   async getByClass(@Param('class') conceptClass: string) {
-    const concepts = await this.conceptService.getConceptsByClass(conceptClass);
+    const concepts = await this.conceptsService.getConceptsByClass(conceptClass);
     return { concepts, conceptClass };
   }
 
@@ -61,7 +61,7 @@ export class ConceptsController {
   @Privileges('manage_concepts')
   @ApiOperation({ summary: 'Get concepts by datatype' })
   async getByDatatype(@Param('datatype') datatype: string) {
-    const concepts = await this.conceptService.getConceptsByDatatype(datatype);
+    const concepts = await this.conceptsService.getConceptsByDatatype(datatype);
     return { concepts, datatype };
   }
 
@@ -69,7 +69,7 @@ export class ConceptsController {
   @Privileges('manage_concepts')
   @ApiOperation({ summary: 'Get concept answers' })
   async getAnswers(@Param('id') conceptId: string) {
-    const answers = await this.conceptService.getConceptAnswers(conceptId);
+    const answers = await this.conceptsService.getConceptAnswers(conceptId);
     return { answers, conceptId };
   }
 
@@ -77,7 +77,7 @@ export class ConceptsController {
   @Privileges('manage_concepts')
   @ApiOperation({ summary: 'Add concept answer' })
   async addAnswer(@Param('id') conceptId: string, @Body() data: { answerConceptId: string; sortWeight?: number }) {
-    const answer = await this.conceptService.addConceptAnswer(conceptId, data.answerConceptId, data.sortWeight);
+    const answer = await this.conceptsService.addConceptAnswer(conceptId, data.answerConceptId, data.sortWeight);
     return { message: 'Answer added', answer };
   }
 
@@ -86,7 +86,7 @@ export class ConceptsController {
   @ApiOperation({ summary: 'Get all concepts' })
   @ApiResponse({ status: 200, description: 'List of concepts' })
   async findAll() {
-    const concepts = await this.conceptService.listConcepts();
+    const concepts = await this.conceptsService.listConcepts();
     return { concepts };
   }
 
@@ -94,7 +94,7 @@ export class ConceptsController {
   @Privileges('manage_concepts')
   @ApiOperation({ summary: 'Get concept by ID' })
   async findOne(@Param('id') id: string) {
-    const concept = await this.conceptService.getConcept(id);
+    const concept = await this.conceptsService.getConcept(id);
     return { concept };
   }
 
@@ -103,7 +103,7 @@ export class ConceptsController {
   @ApiOperation({ summary: 'Update concept' })
   @ApiBody({ type: UpdateConceptDto })
   async update(@Param('id') id: string, @Body() updateDto: UpdateConceptDto) {
-    const concept = await this.conceptService.updateConcept(id, updateDto);
+    const concept = await this.conceptsService.updateConcept(id, updateDto);
     return { message: 'Concept updated', concept };
   }
 
@@ -111,7 +111,7 @@ export class ConceptsController {
   @Privileges('manage_concepts')
   @ApiOperation({ summary: 'Delete concept' })
   async remove(@Param('id') id: string) {
-    const deleted = await this.conceptService.deleteConcept(id);
+    const deleted = await this.conceptsService.deleteConcept(id);
     return { message: 'Concept deleted', deleted };
   }
 }

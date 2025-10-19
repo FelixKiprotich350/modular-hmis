@@ -31,14 +31,18 @@ export class LocationService {
     
     if (!location) return [];
     
-    const hierarchy = [location];
+    const hierarchy: any[] = [location];
     let current = location.parent;
     while (current) {
       hierarchy.unshift(current);
-      current = await this.db.location.findUnique({
-        where: { id: current.parentLocationId || '' },
-        include: { parent: true }
-      });
+      if (current.parentLocationId) {
+        current = await this.db.location.findUnique({
+          where: { id: current.parentLocationId },
+          include: { parent: true }
+        });
+      } else {
+        current = null;
+      }
     }
     
     return hierarchy;

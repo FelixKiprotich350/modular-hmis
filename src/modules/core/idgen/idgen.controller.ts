@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Body, Param, Query, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Put, Inject } from '@nestjs/common';
 import { IdgenService } from './services/idgen.service';
 import { IdentifierSource, IdentifierType } from './models/idgen.model';
 
 @Controller('idgen')
 export class IdgenController {
-  constructor(private readonly idgenService: IdgenService) {}
+  constructor(@Inject('idgenService') private readonly idgenService: IdgenService) {}
 
   @Post('types')
   async createIdentifierType(@Body() createTypeDto: Omit<IdentifierType, 'id'>) {

@@ -1,7 +1,9 @@
 import { Controller, Get, Post, Body, Param, Put, Delete, Query, Inject } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { FormService } from './services/form.service';
 import { Form } from './models/form.model';
 
+@ApiTags('Forms')
 @Controller({ path: 'forms', version: '1' })
 export class FormController {
   constructor(@Inject('formService') private readonly formService: FormService) {}

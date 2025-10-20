@@ -1,7 +1,9 @@
 import { Controller, Get, Post, Body, Param, Put, Delete, Query, Inject } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { MetadataSharingService } from './services/metadata-sharing.service';
 import { MetadataPackage, MetadataSharing } from './models/metadata.model';
 
+@ApiTags('Metadata Sharing')
 @Controller({ path: 'metadata-sharing', version: '1' })
 export class MetadataSharingController {
   constructor(@Inject('metadataSharingService') private readonly metadataSharingService: MetadataSharingService) {}

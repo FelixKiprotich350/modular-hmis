@@ -21,7 +21,7 @@ class UpdateMobileClinicDto {
   status?: string;
 }
 
-@ApiTags('MobileClinic')
+@ApiTags('Mobile Clinic')
 @Controller({ path: 'mobile-clinic', version: '1' })
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()

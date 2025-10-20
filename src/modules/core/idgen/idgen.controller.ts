@@ -1,7 +1,9 @@
 import { Controller, Get, Post, Body, Param, Query, Put, Inject } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { IdgenService } from './services/idgen.service';
 import { IdentifierSource, IdentifierType } from './models/idgen.model';
 
+@ApiTags('ID Generation')
 @Controller('idgen')
 export class IdgenController {
   constructor(@Inject('idgenService') private readonly idgenService: IdgenService) {}

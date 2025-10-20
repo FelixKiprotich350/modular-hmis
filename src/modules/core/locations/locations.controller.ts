@@ -1,7 +1,9 @@
 import { Controller, Get, Post, Body, Param, Put, Delete, Query, Inject } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { LocationService } from './services/locations.service';
 import { Location } from './models/location.model';
 
+@ApiTags('Locations')
 @Controller({ path: 'locations', version: '1' })
 export class LocationsController {
   constructor(@Inject('locationsService') private readonly locationsService: LocationService) {}

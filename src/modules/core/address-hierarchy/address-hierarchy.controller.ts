@@ -1,7 +1,9 @@
 import { Controller, Get, Post, Body, Param, Put, Query, Inject } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { AddressHierarchyService } from './services/address-hierarchy.service';
 import { AddressHierarchyLevel, AddressHierarchyEntry, PersonAddress } from './models/address-hierarchy.model';
 
+@ApiTags('Address Hierarchy')
 @Controller({ path: 'address-hierarchy', version: '1' })
 export class AddressHierarchyController {
   constructor(@Inject('addressHierarchyService') private readonly addressHierarchyService: AddressHierarchyService) {}

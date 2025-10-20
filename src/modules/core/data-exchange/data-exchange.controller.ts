@@ -1,7 +1,9 @@
 import { Controller, Get, Post, Body, Param, Put, Delete, Query, Inject } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { DataExchangeService } from './services/data-exchange.service';
 import { DataExport, DataImport, ETLJob } from './models/data-exchange.model';
 
+@ApiTags('Data Exchange')
 @Controller({ path: 'data-exchange', version: '1' })
 export class DataExchangeController {
   constructor(@Inject('dataExchangeService') private readonly dataExchangeService: DataExchangeService) {}

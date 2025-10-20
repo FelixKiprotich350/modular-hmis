@@ -1,7 +1,9 @@
 import { Controller, Get, Post, Body, Param, Put, Delete, Inject } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { ProgramService } from './services/program.service';
 import { Program, ProgramEnrollment } from './models/program.model';
 
+@ApiTags('Programs')
 @Controller({ path: 'programs', version: '1' })
 export class ProgramController {
   constructor(@Inject('programService') private readonly programService: ProgramService) {}

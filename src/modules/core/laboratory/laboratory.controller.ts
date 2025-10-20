@@ -1,7 +1,9 @@
 import { Controller, Get, Post, Body, Param, Put, Query, Inject } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { LaboratoryService } from './services/laboratory.service';
 import { Laboratory } from './models/laboratory.model';
 
+@ApiTags('Laboratory')
 @Controller({ path: 'laboratory', version: '1' })
 export class LaboratoryController {
   constructor(@Inject('laboratoryService') private readonly laboratoryService: LaboratoryService) {}

@@ -71,6 +71,19 @@ export class FhirTransformerService {
     };
   }
 
+  // Transform FHIR Encounter to internal format
+  fhirToEncounter(fhirEncounter: any): any {
+    return {
+      startDate: new Date(fhirEncounter.period.start),
+      endDate: fhirEncounter.period.end ? new Date(fhirEncounter.period.end) : null,
+      encounterType: fhirEncounter.class?.code || 'GENERAL',
+      patientId: fhirEncounter.subject.reference.split('/')[1],
+      providerId: fhirEncounter.participant?.[0]?.individual.reference.split('/')[1],
+      locationId: fhirEncounter.location?.[0]?.location.reference.split('/')[1],
+      notes: fhirEncounter.reasonCode?.[0]?.text
+    };
+  }
+
   // Transform internal observation to FHIR Observation
   observationToFhir(observation: any): any {
     return {
@@ -95,6 +108,78 @@ export class FhirTransformerService {
         code: observation.valueCoded,
         display: observation.valueCodedName
       } : undefined
+    };
+  }
+
+  // Transform internal appointment to FHIR Appointment
+  appointmentToFhir(appointment: any): any {
+    return {
+      resourceType: 'Appointment',
+      id: appointment.id,
+      status: appointment.status || 'booked',
+      serviceType: [{
+        text: appointment.reason || 'General consultation'
+      }],
+      start: new Date(`${appointment.appointmentDate.toISOString().split('T')[0]}T${appointment.appointmentTime}`).toISOString(),
+      participant: [
+        {
+          actor: { reference: `Patient/${appointment.patientId}` },
+          status: 'accepted'
+        },
+        {
+          actor: { reference: `Practitioner/${appointment.providerId}` },
+          status: 'accepted'
+        }
+      ],
+      location: appointment.locationId ? { reference: `Location/${appointment.locationId}` } : undefined
+    };
+  }
+
+  // Transform FHIR Appointment to internal format
+  fhirToAppointment(fhirAppointment: any): any {
+    const startDate = new Date(fhirAppointment.start);
+    return {
+      appointmentDate: startDate,
+      appointmentTime: startDate.toTimeString().slice(0, 5),
+      status: fhirAppointment.status,
+      reason: fhirAppointment.serviceType?.[0]?.text,
+      patientId: fhirAppointment.participant?.find(p => p.actor.reference.startsWith('Patient/'))?.actor.reference.split('/')[1],
+      providerId: fhirAppointment.participant?.find(p => p.actor.reference.startsWith('Practitioner/'))?.actor.reference.split('/')[1],
+      locationId: fhirAppointment.location?.reference?.split('/')[1]
+    };
+  }
+
+  // Transform internal visit to FHIR Encounter (visits are encounters in FHIR)
+  visitToFhir(visit: any): any {
+    return {
+      resourceType: 'Encounter',
+      id: visit.id,
+      status: visit.stopDatetime ? 'finished' : 'in-progress',
+      class: {
+        system: 'http://terminology.hl7.org/CodeSystem/v3-ActCode',
+        code: visit.visitType?.toLowerCase() || 'AMB',
+        display: visit.visitType || 'Ambulatory'
+      },
+      subject: { reference: `Patient/${visit.patientId}` },
+      period: {
+        start: visit.startDatetime.toISOString(),
+        end: visit.stopDatetime?.toISOString()
+      },
+      location: visit.locationId ? [{
+        location: { reference: `Location/${visit.locationId}` }
+      }] : undefined,
+      serviceProvider: visit.locationId ? { reference: `Organization/${visit.locationId}` } : undefined
+    };
+  }
+
+  // Transform FHIR Encounter to internal visit format
+  fhirToVisit(fhirEncounter: any): any {
+    return {
+      startDatetime: new Date(fhirEncounter.period.start),
+      stopDatetime: fhirEncounter.period.end ? new Date(fhirEncounter.period.end) : null,
+      visitType: fhirEncounter.class?.display || 'Ambulatory',
+      patientId: fhirEncounter.subject.reference.split('/')[1],
+      locationId: fhirEncounter.location?.[0]?.location.reference.split('/')[1]
     };
   }
 }

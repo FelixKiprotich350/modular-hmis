@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Put, Param, Body, Query, Inject } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { ApiVersion } from '../../../core/decorators/api-version.decorator';
-import { FhirTransformerService } from '../../../core/fhir/fhir-transformer.service';
+import { PatientFhirMapper } from './mappers/patient-fhir.mapper';
 import { PatientService } from './services/patients.service';
 
 @ApiTags('Patients - FHIR R4')
@@ -9,8 +9,7 @@ import { PatientService } from './services/patients.service';
 @ApiVersion('fhir')
 export class PatientsFhirController {
   constructor(
-    @Inject('patientService') private patientService: PatientService,
-    private fhirTransformer: FhirTransformerService
+    @Inject('patientService') private patientService: PatientService
   ) {}
 
   @Get('Patient')
@@ -23,7 +22,7 @@ export class PatientsFhirController {
       type: 'searchset',
       total: patients.length,
       entry: patients.map(patient => ({
-        resource: this.fhirTransformer.patientToFhir(patient)
+        resource: PatientFhirMapper.toFhir(patient)
       }))
     };
   }
@@ -32,22 +31,22 @@ export class PatientsFhirController {
   @ApiOperation({ summary: 'Get patient by ID (FHIR R4)' })
   async getPatient(@Param('id') id: string) {
     const patient = await this.patientService.getPatient(id);
-    return this.fhirTransformer.patientToFhir(patient);
+    return PatientFhirMapper.toFhir(patient);
   }
 
   @Post('Patient')
   @ApiOperation({ summary: 'Create patient (FHIR R4)' })
   async createPatient(@Body() fhirPatient: any) {
-    const patientData = this.fhirTransformer.fhirToPatient(fhirPatient);
+    const patientData = PatientFhirMapper.fromFhir(fhirPatient);
     const patient = await this.patientService.registerPatient(patientData);
-    return this.fhirTransformer.patientToFhir(patient);
+    return PatientFhirMapper.toFhir(patient);
   }
 
   @Put('Patient/:id')
   @ApiOperation({ summary: 'Update patient (FHIR R4)' })
   async updatePatient(@Param('id') id: string, @Body() fhirPatient: any) {
-    const patientData = this.fhirTransformer.fhirToPatient(fhirPatient);
+    const patientData = PatientFhirMapper.fromFhir(fhirPatient);
     const patient = await this.patientService.updatePatient(id, patientData);
-    return this.fhirTransformer.patientToFhir(patient);
+    return PatientFhirMapper.toFhir(patient);
   }
 }

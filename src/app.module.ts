@@ -56,12 +56,13 @@ export class AppModule {
               (exp: any) =>
                 typeof exp === "function" &&
                 exp.name &&
-                exp.name.endsWith("Service")
+                exp.name.endsWith("Service") &&
+                exp.prototype && // Ensure it's a class, not a function
+                exp.prototype.constructor === exp
             ) as any;
             if (Service) {
               // Convert PascalCase to camelCase: AddressHierarchyService -> addressHierarchyService
               const serviceName = Service.name.charAt(0).toLowerCase() + Service.name.slice(1);
-              console.log(`Registering service: ${Service.name} as ${serviceName}`);
               providers.push({
                 provide: serviceName,
                 useFactory: (db: PrismaService, registry: ServiceRegistry) => {

@@ -8,6 +8,7 @@ import { AuthGuard } from "./core/guards/auth.guard";
 import { PrivilegeGuard } from "./core/guards/privilege.guard";
 import { TransactionService } from "./core/transaction.service";
 import { AuditInterceptor } from "./core/interceptors/audit.interceptor";
+import { FhirTransformerService } from "./core/fhir/fhir-transformer.service";
 import { APP_INTERCEPTOR } from "@nestjs/core";
 
 @Module({})
@@ -22,6 +23,7 @@ export class AppModule {
       AuthGuard, 
       PrivilegeGuard, 
       TransactionService,
+      FhirTransformerService,
       {
         provide: APP_INTERCEPTOR,
         useClass: AuditInterceptor,
@@ -30,25 +32,23 @@ export class AppModule {
 
     for (const module of modules) {
       try {
-        const Controller = require(module.controllerPath)[
-          `${
-            module.name.charAt(0).toUpperCase() + module.name.slice(1)
-          }Controller`
-        ];
-        if (Controller) controllers.push(Controller);
-        
-        // Check for V2 controller
-        try {
-          const V2Controller = require(module.controllerPath.replace('.controller.ts', '-v2.controller.ts'))[
-            `${
-              module.name.charAt(0).toUpperCase() + module.name.slice(1)
-            }V2Controller`
-          ];
-          if (V2Controller) controllers.push(V2Controller);
-        } catch (e) {
-          // V2 controller doesn't exist, that's fine
+        // Load all discovered controllers
+        for (const controllerPath of module.controllerPaths) {
+          try {
+            const controllerModule = require(controllerPath);
+            const Controller = Object.values(controllerModule).find(
+              (exp: any) =>
+                typeof exp === "function" &&
+                exp.name &&
+                exp.name.endsWith("Controller")
+            ) as any;
+            if (Controller) controllers.push(Controller);
+          } catch (e) {
+            console.warn(`Failed to load controller ${controllerPath}:`, e.message);
+          }
         }
 
+        // Load all discovered services
         for (const servicePath of module.servicePaths) {
           try {
             const serviceModule = require(servicePath);
@@ -59,15 +59,20 @@ export class AppModule {
                 exp.name.endsWith("Service")
             ) as any;
             if (Service) {
+              // Convert PascalCase to camelCase: AddressHierarchyService -> addressHierarchyService
+              const serviceName = Service.name.charAt(0).toLowerCase() + Service.name.slice(1);
+              console.log(`Registering service: ${Service.name} as ${serviceName}`);
               providers.push({
-                provide: `${module.name}Service`,
+                provide: serviceName,
                 useFactory: (db: PrismaService, registry: ServiceRegistry) => {
                   const service = new Service(db, registry);
-                  registry.register(`${module.name}Service`, service);
+                  registry.register(serviceName, service);
                   return service;
                 },
                 inject: [PrismaService, ServiceRegistry],
               });
+            } else {
+              console.warn(`No service found in ${servicePath}`);
             }
           } catch (e) {
             console.warn(`Failed to load service ${servicePath}:`, e.message);
@@ -78,6 +83,8 @@ export class AppModule {
       }
     }
 
+    console.log('Registered providers:', providers.filter(p => typeof p === 'object' && 'provide' in p).map(p => p.provide));
+    
     return {
       module: AppModule,
       controllers: [AppController, ...controllers],

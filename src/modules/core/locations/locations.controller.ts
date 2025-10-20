@@ -6,7 +6,7 @@ import { Location } from './models/location.model';
 @ApiTags('Locations')
 @Controller({ path: 'locations', version: '1' })
 export class LocationsController {
-  constructor(@Inject('locationsService') private readonly locationsService: LocationService) {}
+  constructor(@Inject('locationService') private readonly locationsService: LocationService) {}
 
   @Post()
   async createLocation(@Body() createLocationDto: Omit<Location, 'id' | 'createdAt' | 'updatedAt'>) {

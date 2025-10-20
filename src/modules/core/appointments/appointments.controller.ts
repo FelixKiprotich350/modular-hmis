@@ -6,7 +6,7 @@ import { Appointment } from './models/appointment.model';
 @ApiTags('Appointments')
 @Controller({ path: 'appointments', version: '1' })
 export class AppointmentsController {
-  constructor(@Inject('appointmentsService') private readonly appointmentService: AppointmentService) {}
+  constructor(@Inject('appointmentService') private readonly appointmentService: AppointmentService) {}
 
   @Post()
   async createAppointment(@Body() createAppointmentDto: Omit<Appointment, 'id' | 'createdAt' | 'updatedAt'>) {

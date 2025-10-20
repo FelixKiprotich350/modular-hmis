@@ -11,7 +11,7 @@ import { RegisterPatientDto } from './dto/register-patient.dto';
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class PatientsV2Controller {
-  constructor(@Inject('patientsService') private readonly patientService: PatientService) {}
+  constructor(@Inject('patientService') private readonly patientService: PatientService) {}
 
   @Get()
   @Privileges('view_patients')

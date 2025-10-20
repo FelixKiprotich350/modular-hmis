@@ -3,17 +3,19 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nes
 import { AuthGuard } from '../../../core/guards/auth.guard';
 import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
 import { Privileges } from '../../../core/decorators/privileges.decorator';
+import { ApiVersion } from '../../../core/decorators/api-version.decorator';
 import { PatientService, PatientRegistrationData, PatientSearchCriteria } from './services/patients.service';
 import { RegisterPatientDto } from './dto/register-patient.dto';
 import { SearchPatientDto } from './dto/search-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
 
-@ApiTags('Patients')
+@ApiTags('Patients - Internal')
 @Controller({ path: 'patients', version: '1' })
+@ApiVersion('internal')
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class PatientsController {
-  constructor(@Inject('patientsService') private readonly patientService: PatientService) {}
+  constructor(@Inject('patientService') private readonly patientService: PatientService) {}
 
   @Post('register')
   @Privileges('create_patients')
@@ -123,5 +125,62 @@ export class PatientsController {
   async remove(@Param('id') id: string) {
     const deleted = await this.patientService.deletePatient(id);
     return { message: 'Patient deleted', deleted };
+  }
+
+  // Lightweight endpoints for internal use
+  @Get(':id/summary')
+  @Privileges('view_patients')
+  @ApiOperation({ summary: 'Get patient summary (minimal data for UI)' })
+  async getSummary(@Param('id') id: string) {
+    const patient = await this.patientService.getPatient(id);
+    return {
+      id: patient.id,
+      name: `${patient.person.firstName} ${patient.person.lastName}`,
+      gender: patient.person.gender,
+      birthdate: patient.person.birthdate,
+      age: patient.person.birthdate ? Math.floor((Date.now() - patient.person.birthdate.getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null,
+      primaryId: patient.identifiers?.find(i => i.preferred)?.identifier,
+      phone: patient.person.attributes?.find(a => a.attributeType.name === 'phone')?.value
+    };
+  }
+
+  @Get(':id/encounters/recent')
+  @Privileges('view_encounters')
+  @ApiOperation({ summary: 'Get recent encounters (last 5)' })
+  async getRecentEncounters(@Param('id') id: string) {
+    const patient = await this.patientService.getPatient(id);
+    return patient.encounters
+      .sort((a, b) => b.startDate.getTime() - a.startDate.getTime())
+      .slice(0, 5)
+      .map(e => ({
+        id: e.id,
+        type: e.encounterType,
+        date: e.startDate,
+        provider: e.provider?.name || 'Unknown',
+        location: e.location?.name
+      }));
+  }
+
+  @Get(':id/vitals/latest')
+  @Privileges('view_observations')
+  @ApiOperation({ summary: 'Get latest vital signs' })
+  async getLatestVitals(@Param('id') id: string) {
+    const patient = await this.patientService.getPatient(id);
+    const vitals = ['weight', 'height', 'blood_pressure', 'temperature', 'pulse'];
+    const latestVitals = {};
+    
+    for (const vital of vitals) {
+      const obs = patient.observations
+        ?.filter(o => o.concept.name.toLowerCase().includes(vital))
+        ?.sort((a, b) => b.obsDatetime.getTime() - a.obsDatetime.getTime())[0];
+      if (obs) {
+        latestVitals[vital] = {
+          value: obs.valueNumeric || obs.valueText,
+          unit: obs.concept.units,
+          date: obs.obsDatetime
+        };
+      }
+    }
+    return latestVitals;
   }
 }

@@ -29,7 +29,7 @@ class UpdateConceptDto {
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class ConceptsController {
-  constructor(@Inject('conceptsService') private readonly conceptsService: ConceptService) {}
+  constructor(@Inject('conceptService') private readonly conceptsService: ConceptService) {}
 
   @Post()
   @Privileges('manage_concepts')

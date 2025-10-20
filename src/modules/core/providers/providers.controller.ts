@@ -28,7 +28,7 @@ class UpdateProviderDto {
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class ProvidersController {
-  constructor(@Inject('providersService') private readonly providersService: ProviderService) {}
+  constructor(@Inject('providerService') private readonly providersService: ProviderService) {}
 
   @Post()
   @Privileges('manage_providers')

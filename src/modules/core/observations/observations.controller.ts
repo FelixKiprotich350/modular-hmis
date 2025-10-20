@@ -6,7 +6,7 @@ import { Observation } from './models/observation.model';
 @ApiTags('Observations')
 @Controller({ path: 'observations', version: '1' })
 export class ObservationsController {
-  constructor(@Inject('observationsService') private readonly observationsService: ObservationService) {}
+  constructor(@Inject('observationService') private readonly observationsService: ObservationService) {}
 
   @Post()
   async createObservation(@Body() createObsDto: Omit<Observation, 'id' | 'createdAt' | 'updatedAt'>) {

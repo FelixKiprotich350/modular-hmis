@@ -5,7 +5,7 @@ export interface ModuleInfo {
   name: string;
   type: "core" | "custom";
   servicePaths: string[];
-  controllerPath: string;
+  controllerPaths: string[];
 }
 
 export function discoverModules(): ModuleInfo[] {
@@ -22,6 +22,7 @@ export function discoverModules(): ModuleInfo[] {
         if (statSync(modulePath).isDirectory()) {
           const servicesPath = join(modulePath, "services");
           let servicePaths: string[] = [];
+          let controllerPaths: string[] = [];
           
           try {
             const serviceFiles = readdirSync(servicesPath);
@@ -29,12 +30,31 @@ export function discoverModules(): ModuleInfo[] {
               .filter(file => file.endsWith('.service.ts'))
               .map(file => join(servicesPath, file));
           } catch (e) {}
+
+          // Discover controllers recursively
+          function findControllers(dir: string): string[] {
+            const controllers: string[] = [];
+            try {
+              const files = readdirSync(dir);
+              for (const file of files) {
+                const filePath = join(dir, file);
+                if (statSync(filePath).isDirectory()) {
+                  controllers.push(...findControllers(filePath));
+                } else if (file.endsWith('.controller.ts')) {
+                  controllers.push(filePath);
+                }
+              }
+            } catch (e) {}
+            return controllers;
+          }
+
+          controllerPaths = findControllers(modulePath);
           
           modules.push({
             name,
             type: type as "core" | "custom",
             servicePaths,
-            controllerPath: join(modulePath, `${name}.controller`),
+            controllerPaths,
           });
         }
       }

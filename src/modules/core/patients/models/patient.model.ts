@@ -22,12 +22,14 @@ export interface Person {
   firstName: string;
   lastName: string;
   middleName?: string;
+  sex: string;
   gender: string;
   birthdate?: Date;
   birthdateEstimated: boolean;
   dead: boolean;
   deathDate?: Date;
   causeOfDeath?: string;
+  deathCertificateNumber?: string;
   addresses?: PersonAddress[];
   attributes?: PersonAttribute[];
   createdAt: Date;

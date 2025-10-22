@@ -10,7 +10,8 @@ class CreateProviderDto {
   firstName: string;
   lastName: string;
   middleName?: string;
-  gender: string;
+  sex: 'M' | 'F' | 'U' | 'O';
+  gender: 'Man' | 'Woman' | 'Transgender';
   birthdate?: Date;
   phone?: string;
   email?: string;

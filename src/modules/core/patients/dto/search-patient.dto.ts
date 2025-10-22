@@ -10,7 +10,10 @@ export class SearchPatientDto {
   @ApiProperty({ required: false, description: 'Phone number to search' })
   phone?: string;
   
-  @ApiProperty({ required: false, enum: ['M', 'F', 'O'], description: 'Gender filter' })
+  @ApiProperty({ required: false, enum: ['M', 'F', 'U', 'O'], description: 'Sex filter' })
+  sex?: string;
+  
+  @ApiProperty({ required: false, enum: ['Man', 'Woman', 'Transgender'], description: 'Gender filter' })
   gender?: string;
   
   @ApiProperty({ required: false, description: 'Birth date filter' })

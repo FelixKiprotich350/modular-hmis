@@ -79,7 +79,8 @@ model Person {
   firstName          String
   lastName           String
   middleName         String?
-  gender             String
+  sex                String            // M, F, U, O
+  gender             String            // Man, Woman, Transgender
   birthdate          DateTime?
   birthdateEstimated Boolean           @default(false)
   dead               Boolean           @default(false)

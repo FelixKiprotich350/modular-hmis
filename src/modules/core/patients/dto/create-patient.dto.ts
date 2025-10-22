@@ -10,8 +10,11 @@ export class CreatePatientDto {
   @ApiProperty({ example: '1990-01-01' })
   dateOfBirth: string;
 
-  @ApiProperty({ example: 'Male', enum: ['Male', 'Female', 'Other'] })
-  gender: string;
+  @ApiProperty({ enum: ['M', 'F', 'U', 'O'] })
+  sex: 'M' | 'F' | 'U' | 'O';
+  
+  @ApiProperty({ enum: ['Man', 'Woman', 'Transgender'] })
+  gender: 'Man' | 'Woman' | 'Transgender';
 
   @ApiProperty({ example: '+1234567890', required: false })
   phone?: string;

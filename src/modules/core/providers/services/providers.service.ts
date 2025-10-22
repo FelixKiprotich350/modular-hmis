@@ -7,7 +7,19 @@ export class ProviderService {
   async createProvider(personData: Omit<Person, 'id'>, identifier?: string): Promise<any> {
     return await this.db.$transaction(async (tx) => {
       const person = await tx.person.create({
-        data: personData
+        data: {
+          firstName: personData.firstName,
+          lastName: personData.lastName,
+          middleName: personData.middleName,
+          sex: personData.sex,
+          gender: personData.gender,
+          birthdate: personData.birthdate,
+          birthdateEstimated: personData.birthdateEstimated || false,
+          dead: personData.dead || false,
+          deathDate: personData.deathDate,
+          causeOfDeath: personData.causeOfDeath,
+          deathCertificateNumber: personData.deathCertificateNumber
+        }
       });
 
       return await tx.provider.create({

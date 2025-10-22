@@ -92,8 +92,11 @@ export class RelationshipPersonDto {
   @ApiProperty({ required: false })
   middleName?: string;
   
-  @ApiProperty({ enum: ['M', 'F', 'O'] })
-  gender: 'M' | 'F' | 'O';
+  @ApiProperty({ enum: ['M', 'F', 'U', 'O'] })
+  sex: 'M' | 'F' | 'U' | 'O';
+  
+  @ApiProperty({ enum: ['Man', 'Woman', 'Transgender'] })
+  gender: 'Man' | 'Woman' | 'Transgender';
   
   @ApiProperty({ required: false })
   birthdate?: Date;
@@ -123,8 +126,11 @@ export class RegisterPatientDto {
   @ApiProperty({ required: false, description: 'Patient middle name' })
   middleName?: string;
   
-  @ApiProperty({ enum: ['M', 'F', 'O'], description: 'Patient gender' })
-  gender: 'M' | 'F' | 'O';
+  @ApiProperty({ enum: ['M', 'F', 'U', 'O'], description: 'Patient sex' })
+  sex: 'M' | 'F' | 'U' | 'O';
+  
+  @ApiProperty({ enum: ['Man', 'Woman', 'Transgender'], description: 'Patient gender' })
+  gender: 'Man' | 'Woman' | 'Transgender';
   
   @ApiProperty({ required: false, description: 'Patient birth date' })
   birthdate?: Date;

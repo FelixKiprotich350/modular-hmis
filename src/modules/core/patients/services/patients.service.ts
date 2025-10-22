@@ -30,6 +30,7 @@ export class PatientService {
           firstName: data.firstName,
           lastName: data.lastName,
           middleName: data.middleName,
+          sex: data.sex,
           gender: data.gender,
           birthdate: data.birthdate,
           birthdateEstimated: data.birthdateEstimated || false,
@@ -115,6 +116,7 @@ export class PatientService {
                 firstName: rel.personB.firstName,
                 lastName: rel.personB.lastName,
                 middleName: rel.personB.middleName,
+                sex: rel.personB.sex,
                 gender: rel.personB.gender,
                 birthdate: rel.personB.birthdate
               }
@@ -143,7 +145,8 @@ export class PatientService {
               firstName: nok.firstName,
               lastName: nok.lastName,
               middleName: nok.middleName,
-              gender: 'O' // Default gender for next of kin
+              sex: 'U', // Default sex for next of kin
+              gender: 'Man' // Default gender for next of kin
             }
           });
 
@@ -228,7 +231,8 @@ export class PatientService {
       firstName: personData.firstName,
       lastName: personData.lastName,
       middleName: personData.middleName,
-      gender: personData.gender as 'M' | 'F' | 'O',
+      sex: personData.sex as 'M' | 'F' | 'U' | 'O',
+      gender: personData.gender as 'Man' | 'Woman' | 'Transgender',
       birthdate: personData.birthdate,
       birthdateEstimated: personData.birthdateEstimated,
       identifiers: [{ identifierTypeId, preferred: true }]

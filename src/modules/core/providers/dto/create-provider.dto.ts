@@ -10,8 +10,11 @@ export class CreateProviderDto {
   @ApiProperty({ required: false, example: 'Michael' })
   middleName?: string;
   
-  @ApiProperty({ enum: ['M', 'F', 'O'] })
-  gender: string;
+  @ApiProperty({ enum: ['M', 'F', 'U', 'O'] })
+  sex: 'M' | 'F' | 'U' | 'O';
+  
+  @ApiProperty({ enum: ['Man', 'Woman', 'Transgender'] })
+  gender: 'Man' | 'Woman' | 'Transgender';
   
   @ApiProperty({ required: false })
   birthdate?: Date;

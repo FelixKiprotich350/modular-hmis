@@ -4,9 +4,14 @@ import { VersioningType } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule.forRoot());
+  const app = await NestFactory.create(AppModule.forRoot(), {
+    logger: ['error', 'warn']
+  });
   
-  app.enableCors();
+  app.enableCors({
+    origin: true,
+    credentials: true
+  });
   
   // Enable API versioning
   app.enableVersioning({
@@ -26,7 +31,9 @@ async function bootstrap() {
 
   const port = process.env.PORT || 4000;
   await app.listen(port);
-  console.log(`Application is running on: http://localhost:${port}`);
+  console.log(`🚀 Application is running on: http://localhost:${port}`);
+  console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
+  console.log(`🔍 Health Check: http://localhost:${port}/health`);
 }
 
 bootstrap();

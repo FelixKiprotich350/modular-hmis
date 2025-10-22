@@ -85,10 +85,16 @@ model Person {
   dead               Boolean           @default(false)
   deathDate          DateTime?
   causeOfDeath       String?
+  deathCertificateNumber String?
   patients           Patient[]
   providers          Provider[]
   addresses          PersonAddress[]
   attributes         PersonAttribute[]
+  contacts           PersonContact[]
+  relationships      Relationship[]    @relation("PersonA")
+  relatedTo          Relationship[]    @relation("PersonB")
+  nextOfKinFor       NextOfKin[]       @relation("NextOfKinPerson")
+  nextOfKin          NextOfKin[]       @relation("PatientPerson")
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
 }
@@ -116,6 +122,60 @@ model PersonAddress {
   @@index([personId])
 }
 
+model PersonContact {
+  id        String   @id @default(uuid())
+  personId  String
+  type      String   // phone, email, fax
+  value     String
+  preferred Boolean  @default(false)
+  person    Person   @relation(fields: [personId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([personId])
+}
+
+model RelationshipType {
+  id            String         @id @default(uuid())
+  aIsToB        String         // e.g., "Parent"
+  bIsToA        String         // e.g., "Child"
+  description   String?
+  retired       Boolean        @default(false)
+  relationships Relationship[]
+  createdAt     DateTime       @default(now())
+}
+
+model Relationship {
+  id                 String           @id @default(uuid())
+  personAId          String
+  personBId          String
+  relationshipTypeId String
+  startDate          DateTime?
+  endDate            DateTime?
+  personA            Person           @relation("PersonA", fields: [personAId], references: [id])
+  personB            Person           @relation("PersonB", fields: [personBId], references: [id])
+  relationshipType   RelationshipType @relation(fields: [relationshipTypeId], references: [id])
+  createdAt          DateTime         @default(now())
+
+  @@index([personAId])
+  @@index([personBId])
+}
+
+model NextOfKin {
+  id              String   @id @default(uuid())
+  patientPersonId String
+  nextOfKinPersonId String
+  relationship    String
+  priority        Int      @default(1)
+  contactPhone    String?
+  contactEmail    String?
+  address         String?
+  patient         Person   @relation("PatientPerson", fields: [patientPersonId], references: [id])
+  nextOfKinPerson Person   @relation("NextOfKinPerson", fields: [nextOfKinPersonId], references: [id])
+  createdAt       DateTime @default(now())
+
+  @@index([patientPersonId])
+}
+
 model PersonAttribute {
   id              String              @id @default(uuid())
   personId        String
@@ -132,7 +192,7 @@ model PersonAttributeType {
   id          String            @id @default(uuid())
   name        String            @unique
   description String?
-  format      String
+  format      String            // text, number, date, boolean, coded
   required    Boolean           @default(false)
   attributes  PersonAttribute[]
 }

@@ -179,7 +179,162 @@ async function main() {
     }
   });
 
-  console.log('Database seeded successfully');
+  // Create identifier types
+  const nationalIdType = await prisma.identifierType.upsert({
+    where: { name: 'National ID' },
+    update: {},
+    create: {
+      name: 'National ID',
+      description: 'National identification number',
+      required: true
+    }
+  });
+
+  const medicalRecordType = await prisma.identifierType.upsert({
+    where: { name: 'Medical Record Number' },
+    update: {},
+    create: {
+      name: 'Medical Record Number',
+      description: 'Hospital medical record number',
+      required: false
+    }
+  });
+
+  // Create relationship types
+  const relationshipTypes = [
+    { aIsToB: 'Parent', bIsToA: 'Child' },
+    { aIsToB: 'Spouse', bIsToA: 'Spouse' },
+    { aIsToB: 'Sibling', bIsToA: 'Sibling' },
+    { aIsToB: 'Guardian', bIsToA: 'Ward' },
+    { aIsToB: 'Emergency Contact', bIsToA: 'Patient' }
+  ];
+
+  for (const relType of relationshipTypes) {
+    await prisma.relationshipType.upsert({
+      where: { aIsToB: relType.aIsToB },
+      update: {},
+      create: relType
+    });
+  }
+
+  // Create person attribute types
+  const attributeTypes = [
+    { name: 'Occupation', format: 'text' },
+    { name: 'Education Level', format: 'text' },
+    { name: 'Marital Status', format: 'coded' },
+    { name: 'Religion', format: 'text' },
+    { name: 'Nationality', format: 'text' },
+    { name: 'Emergency Contact Name', format: 'text' },
+    { name: 'Emergency Contact Phone', format: 'text' }
+  ];
+
+  for (const attrType of attributeTypes) {
+    await prisma.personAttributeType.upsert({
+      where: { name: attrType.name },
+      update: {},
+      create: attrType
+    });
+  }
+
+  // Create sample patients with comprehensive data
+  const samplePatients = [
+    {
+      person: {
+        firstName: 'John',
+        lastName: 'Doe',
+        gender: 'M',
+        birthdate: new Date('1985-03-15')
+      },
+      identifiers: [{ type: nationalIdType.id, value: 'ID123456789', preferred: true }],
+      contacts: [
+        { type: 'phone', value: '+1234567890', preferred: true },
+        { type: 'email', value: 'john.doe@email.com', preferred: false }
+      ],
+      addresses: [{
+        address1: '123 Main St',
+        cityVillage: 'Springfield',
+        stateProvince: 'IL',
+        country: 'USA',
+        postalCode: '62701',
+        preferred: true
+      }]
+    },
+    {
+      person: {
+        firstName: 'Jane',
+        lastName: 'Smith',
+        gender: 'F',
+        birthdate: new Date('1990-07-22')
+      },
+      identifiers: [{ type: nationalIdType.id, value: 'ID987654321', preferred: true }],
+      contacts: [
+        { type: 'phone', value: '+1987654321', preferred: true }
+      ],
+      addresses: [{
+        address1: '456 Oak Ave',
+        cityVillage: 'Madison',
+        stateProvince: 'WI',
+        country: 'USA',
+        postalCode: '53703',
+        preferred: true
+      }]
+    }
+  ];
+
+  for (const patientData of samplePatients) {
+    const person = await prisma.person.create({
+      data: patientData.person
+    });
+
+    const patient = await prisma.patient.create({
+      data: { personId: person.id }
+    });
+
+    // Create identifiers
+    for (const identifier of patientData.identifiers) {
+      await prisma.patientIdentifier.create({
+        data: {
+          patientId: patient.id,
+          identifierTypeId: identifier.type,
+          identifier: identifier.value,
+          preferred: identifier.preferred
+        }
+      });
+    }
+
+    // Create contacts
+    if (patientData.contacts) {
+      for (const contact of patientData.contacts) {
+        await prisma.personContact.create({
+          data: {
+            personId: person.id,
+            type: contact.type,
+            value: contact.value,
+            preferred: contact.preferred
+          }
+        });
+      }
+    }
+
+    // Create addresses
+    if (patientData.addresses) {
+      for (const address of patientData.addresses) {
+        await prisma.personAddress.create({
+          data: {
+            personId: person.id,
+            preferred: address.preferred,
+            address1: address.address1,
+            cityVillage: address.cityVillage,
+            stateProvince: address.stateProvince,
+            country: address.country,
+            postalCode: address.postalCode
+          }
+        });
+      }
+    }
+  }
+
+  console.log('Database seeded successfully with comprehensive patient data');
 }
 
 main()

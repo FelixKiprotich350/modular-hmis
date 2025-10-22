@@ -8,6 +8,7 @@ import { AuthGuard } from "./core/guards/auth.guard";
 import { PrivilegeGuard } from "./core/guards/privilege.guard";
 import { TransactionService } from "./core/transaction.service";
 import { AuditInterceptor } from "./core/interceptors/audit.interceptor";
+import { LoggingInterceptor } from "./core/interceptors/logging.interceptor";
 import { FhirTransformerService } from "./core/fhir/fhir-transformer.service";
 import { APP_INTERCEPTOR } from "@nestjs/core";
 
@@ -17,17 +18,21 @@ export class AppModule {
     const modules = discoverModules();
     const controllers = [];
     const providers: Provider[] = [
-      AppService, 
-      PrismaService, 
-      ServiceRegistry, 
-      AuthGuard, 
-      PrivilegeGuard, 
+      AppService,
+      PrismaService,
+      ServiceRegistry,
+      AuthGuard,
+      PrivilegeGuard,
       TransactionService,
       FhirTransformerService,
       {
         provide: APP_INTERCEPTOR,
         useClass: AuditInterceptor,
-      }
+      },
+      {
+        provide: APP_INTERCEPTOR,
+        useClass: LoggingInterceptor,
+      },
     ];
 
     for (const module of modules) {
@@ -44,7 +49,10 @@ export class AppModule {
             ) as any;
             if (Controller) controllers.push(Controller);
           } catch (e) {
-            console.warn(`Failed to load controller ${controllerPath}:`, e.message);
+            console.warn(
+              `Failed to load controller ${controllerPath}:`,
+              e.message
+            );
           }
         }
 
@@ -62,7 +70,8 @@ export class AppModule {
             ) as any;
             if (Service) {
               // Convert PascalCase to camelCase: AddressHierarchyService -> addressHierarchyService
-              const serviceName = Service.name.charAt(0).toLowerCase() + Service.name.slice(1);
+              const serviceName =
+                Service.name.charAt(0).toLowerCase() + Service.name.slice(1);
               providers.push({
                 provide: serviceName,
                 useFactory: (db: PrismaService, registry: ServiceRegistry) => {
@@ -83,9 +92,6 @@ export class AppModule {
         console.warn(`Failed to load module ${module.name}:`, e.message);
       }
     }
-
-    console.log('Registered providers:', providers.filter(p => typeof p === 'object' && 'provide' in p).map(p => p.provide));
-    
     return {
       module: AppModule,
       controllers: [AppController, ...controllers],

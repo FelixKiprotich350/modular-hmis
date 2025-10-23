@@ -14,7 +14,7 @@ import { CreateServicePointDto } from "./dto/create-facility.dto";
 import { UpdateServicePointDto } from "./dto/update-department.dto";
 
 @ApiTags("Service Points")
-@Controller("api/service-points")
+@Controller("service-points")
 export class ServicePointsController {
   constructor(
     @Inject("locationService") private readonly locationService: LocationService
@@ -30,6 +30,13 @@ export class ServicePointsController {
     @Body() createServicePointDto: CreateServicePointDto
   ) {
     return await this.locationService.createServicePoint(createServicePointDto);
+  }
+
+  @Get()
+  @ApiOperation({ summary: "Get all service points" })
+  @ApiResponse({ status: 200, description: "List of all service points" })
+  async getAllServicePoints() {
+    return await this.locationService.getAllServicePoints();
   }
 
   @Get("location/:locationId")

@@ -4,7 +4,7 @@ import { ServicesService } from './services/services.service';
 import { CreateServiceDto, UpdateServiceDto } from './dto/create-service.dto';
 
 @ApiTags('Services')
-@Controller('api/services')
+@Controller('services')
 export class ServicesController {
   constructor(@Inject('servicesService') private readonly servicesService: ServicesService) {}
 

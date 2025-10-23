@@ -4,7 +4,7 @@ import { LocationService } from './services/locations.service';
 import { CreateFacilityDto } from './dto/create-facility.dto';
 
 @ApiTags('Facilities')
-@Controller('api/facilities')
+@Controller('facilities')
 export class FacilitiesController {
   constructor(@Inject('locationService') private readonly locationService: LocationService) {}
 

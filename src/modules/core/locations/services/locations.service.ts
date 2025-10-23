@@ -52,6 +52,15 @@ export class LocationService {
     return await this.db.department.create({ data });
   }
 
+  async getAllDepartments(): Promise<any[]> {
+    return await this.db.department.findMany({
+      where: { retired: false },
+      include: {
+        facility: true
+      }
+    });
+  }
+
   async getFacilityDepartments(facilityId: string): Promise<any[]> {
     return await this.db.department.findMany({
       where: { facilityId, retired: false }
@@ -100,6 +109,25 @@ export class LocationService {
       where: { servicePointId, active: true },
       include: {
         service: true
+      }
+    });
+  }
+
+  async getAllServicePoints(): Promise<any[]> {
+    return await this.db.servicePoint.findMany({
+      where: { retired: false },
+      include: {
+        location: {
+          include: {
+            facility: true
+          }
+        },
+        services: {
+          where: { active: true },
+          include: {
+            service: true
+          }
+        }
       }
     });
   }

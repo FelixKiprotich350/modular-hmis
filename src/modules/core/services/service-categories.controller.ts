@@ -4,7 +4,7 @@ import { ServiceCategoriesService } from './services/service-categories.service'
 import { CreateServiceCategoryDto, UpdateServiceCategoryDto } from './dto/create-service-category.dto';
 
 @ApiTags('Service Categories')
-@Controller('api/service-categories')
+@Controller('service-categories')
 export class ServiceCategoriesController {
   constructor(@Inject('serviceCategoriesService') private readonly serviceCategoriesService: ServiceCategoriesService) {}
 

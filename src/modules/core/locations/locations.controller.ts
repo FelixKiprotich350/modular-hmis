@@ -12,7 +12,7 @@ import { LocationService } from "./services/locations.service";
 import { CreateLocationDto } from "./dto/create-facility.dto";
 
 @ApiTags("Locations")
-@Controller("api/locations")
+@Controller("locations")
 export class LocationsController {
   constructor(
     @Inject("locationService") private readonly locationService: LocationService

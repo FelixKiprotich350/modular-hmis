@@ -75,9 +75,46 @@ export class LocationService {
     return await this.db.servicePoint.create({ data });
   }
 
+  async addServiceToServicePoint(servicePointId: string, serviceId: string): Promise<any> {
+    return await this.db.servicePointService.create({
+      data: {
+        servicePointId,
+        serviceId
+      }
+    });
+  }
+
+  async removeServiceFromServicePoint(servicePointId: string, serviceId: string): Promise<any> {
+    return await this.db.servicePointService.delete({
+      where: {
+        servicePointId_serviceId: {
+          servicePointId,
+          serviceId
+        }
+      }
+    });
+  }
+
+  async getServicePointServices(servicePointId: string): Promise<any[]> {
+    return await this.db.servicePointService.findMany({
+      where: { servicePointId, active: true },
+      include: {
+        service: true
+      }
+    });
+  }
+
   async getLocationServicePoints(locationId: string): Promise<any[]> {
     return await this.db.servicePoint.findMany({
-      where: { locationId, retired: false }
+      where: { locationId, retired: false },
+      include: {
+        services: {
+          where: { active: true },
+          include: {
+            service: true
+          }
+        }
+      }
     });
   }
 

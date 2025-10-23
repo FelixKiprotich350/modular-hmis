@@ -340,7 +340,47 @@ async function main() {
     }
   }
 
-  console.log('Database seeded successfully with comprehensive patient data');
+  // Create service categories
+  const categories = [
+    { name: 'Consultation', code: 'CONSULTATION', description: 'Medical consultation services' },
+    { name: 'Laboratory', code: 'LABORATORY', description: 'Laboratory and diagnostic tests' },
+    { name: 'Radiology', code: 'RADIOLOGY', description: 'Imaging and radiology services' },
+    { name: 'Pharmacy', code: 'PHARMACY', description: 'Medication and pharmaceutical services' },
+    { name: 'Nursing', code: 'NURSING', description: 'Nursing care services' },
+    { name: 'Emergency', code: 'EMERGENCY', description: 'Emergency medical services' },
+    { name: 'Preventive', code: 'PREVENTIVE', description: 'Preventive healthcare services' },
+    { name: 'Maternity', code: 'MATERNITY', description: 'Maternal and child health services' },
+    { name: 'Dental', code: 'DENTAL', description: 'Dental care services' }
+  ];
+
+  const createdCategories = new Map();
+  for (const categoryData of categories) {
+    const category = await prisma.serviceCategory.upsert({
+      where: { code: categoryData.code },
+      update: {},
+      create: categoryData
+    });
+    createdCategories.set(categoryData.code, category.id);
+  }
+
+  // Create sample services
+  const services = [
+    { name: 'General Consultation', code: 'GEN_CONSULT', categoryId: createdCategories.get('CONSULTATION'), duration: 30, price: 50.00 },
+    { name: 'Laboratory Test', code: 'LAB_TEST', categoryId: createdCategories.get('LABORATORY'), duration: 15, price: 25.00 },
+    { name: 'X-Ray', code: 'XRAY', categoryId: createdCategories.get('RADIOLOGY'), duration: 20, price: 75.00 },
+    { name: 'Prescription Dispensing', code: 'PHARMACY', categoryId: createdCategories.get('PHARMACY'), duration: 10, price: 5.00 },
+    { name: 'Vital Signs Check', code: 'VITALS', categoryId: createdCategories.get('NURSING'), duration: 10, price: 15.00 }
+  ];
+
+  for (const serviceData of services) {
+    await prisma.service.upsert({
+      where: { code: serviceData.code },
+      update: {},
+      create: serviceData
+    });
+  }
+
+  console.log('Database seeded successfully with comprehensive patient data and services');
 }
 
 main()

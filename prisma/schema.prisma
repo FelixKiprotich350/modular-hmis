@@ -374,19 +374,65 @@ model Location {
   @@index([parentLocationId])
 }
 
+model ServiceCategory {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  code        String    @unique
+  description String?
+  active      Boolean   @default(true)
+  services    Service[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([active])
+}
+
+model Service {
+  id           String                @id @default(uuid())
+  name         String
+  code         String                @unique
+  description  String?
+  categoryId   String
+  duration     Int?                  // in minutes
+  price        Float?
+  active       Boolean               @default(true)
+  category     ServiceCategory       @relation(fields: [categoryId], references: [id])
+  servicePoints ServicePointService[]
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@index([categoryId])
+  @@index([active])
+}
+
 model ServicePoint {
-  id          String         @id @default(uuid())
+  id          String                @id @default(uuid())
   locationId  String
   name        String
   description String?
-  serviceType String         // consultation, pharmacy, lab, radiology, etc
-  retired     Boolean        @default(false)
-  location    Location       @relation(fields: [locationId], references: [id])
+  serviceType String                // consultation, pharmacy, lab, radiology, etc
+  retired     Boolean               @default(false)
+  location    Location              @relation(fields: [locationId], references: [id])
   queueEntries PatientQueue[]
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  services    ServicePointService[]
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
 
   @@index([locationId])
+}
+
+model ServicePointService {
+  id             String       @id @default(uuid())
+  servicePointId String
+  serviceId      String
+  active         Boolean      @default(true)
+  servicePoint   ServicePoint @relation(fields: [servicePointId], references: [id])
+  service        Service      @relation(fields: [serviceId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  @@unique([servicePointId, serviceId])
+  @@index([servicePointId])
+  @@index([serviceId])
 }
 
 model Encounter {

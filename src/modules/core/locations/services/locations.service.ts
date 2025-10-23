@@ -58,6 +58,13 @@ export class LocationService {
     });
   }
 
+  async updateDepartment(id: string, data: { name?: string; description?: string }): Promise<any> {
+    return await this.db.department.update({
+      where: { id },
+      data
+    });
+  }
+
   // Service Point Management
   async createServicePoint(data: {
     locationId: string;
@@ -71,6 +78,13 @@ export class LocationService {
   async getLocationServicePoints(locationId: string): Promise<any[]> {
     return await this.db.servicePoint.findMany({
       where: { locationId, retired: false }
+    });
+  }
+
+  async updateServicePoint(id: string, data: { name?: string; description?: string; serviceType?: string }): Promise<any> {
+    return await this.db.servicePoint.update({
+      where: { id },
+      data
     });
   }
 

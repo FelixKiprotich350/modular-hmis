@@ -440,6 +440,7 @@ model Encounter {
   patientId    String
   providerId   String
   locationId   String?
+  visitId      String
   encounterType String
   startDate    DateTime
   endDate      DateTime?
@@ -447,14 +448,15 @@ model Encounter {
   patient      Patient       @relation(fields: [patientId], references: [id])
   provider     Provider      @relation(fields: [providerId], references: [id])
   location     Location?     @relation(fields: [locationId], references: [id])
+  visit        Visit        @relation(fields: [visitId], references: [id])
   observations Observation[]
-  visits       Visit[]
   orders       Order[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
   @@index([patientId])
   @@index([providerId])
+  @@index([visitId])
 }
 
 model Appointment {
@@ -727,16 +729,15 @@ model Observation {
 }
 
 model Visit {
-  id          String     @id @default(uuid())
+  id          String      @id @default(uuid())
   patientId   String
-  encounterId String?
   visitType   String
   startDate   DateTime
   endDate     DateTime?
   notes       String?
-  encounter   Encounter? @relation(fields: [encounterId], references: [id])
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  encounters  Encounter[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
   @@index([patientId])
 }

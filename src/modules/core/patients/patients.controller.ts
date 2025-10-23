@@ -10,6 +10,7 @@ import {
   Query,
   Inject,
 } from "@nestjs/common";
+import { FieldSelector } from "../../../core/decorators/field-selector.decorator";
 import {
   ApiTags,
   ApiOperation,
@@ -113,16 +114,16 @@ export class PatientsController {
   @Privileges("view_patients")
   @ApiOperation({ summary: "Get all patients" })
   @ApiResponse({ status: 200, description: "List of patients" })
-  async findAll() {
-    const patients = await this.patientService.listPatients();
+  async findAll(@FieldSelector() options: any) {
+    const patients = await this.patientService.listPatients(options);
     return patients;
   }
 
   @Get(":id")
   @Privileges("view_patients")
   @ApiOperation({ summary: "Get patient by ID" })
-  async findOne(@Param("id") id: string) {
-    const patient = await this.patientService.getPatient(id);
+  async findOne(@Param("id") id: string, @FieldSelector() options: any) {
+    const patient = await this.patientService.getPatient(id, options);
     return patient;
   }
 

@@ -4,7 +4,7 @@ import { Visit, VisitType, Encounter } from '../models/visit.model';
 export class VisitService {
   constructor(private db: PrismaClient) {}
 
-  async createVisit(data: Omit<Visit, 'id' | 'createdAt' | 'updatedAt'>): Promise<any> {
+  async createVisit(data: { patientId: string; visitType: string; startDate: Date; endDate?: Date; notes?: string }): Promise<any> {
     return await this.db.visit.create({
       data
     });
@@ -35,7 +35,7 @@ export class VisitService {
     return await this.db.visit.findUnique({
       where: { id },
       include: {
-        encounter: true
+        encounters: true
       }
     });
   }
@@ -48,7 +48,7 @@ export class VisitService {
     return await this.db.visit.findMany({
       where: { patientId },
       include: {
-        encounter: true
+        encounters: true
       },
       orderBy: {
         startDate: 'desc'
@@ -62,7 +62,7 @@ export class VisitService {
         endDate: null
       },
       include: {
-        encounter: true
+        encounters: true
       }
     });
   }
@@ -74,7 +74,7 @@ export class VisitService {
         endDate: null
       },
       include: {
-        encounter: true
+        encounters: true
       }
     });
   }
@@ -83,7 +83,7 @@ export class VisitService {
     return await this.db.visit.findMany({
       where: { visitType },
       include: {
-        encounter: true
+        encounters: true
       },
       orderBy: {
         startDate: 'desc'
@@ -100,7 +100,7 @@ export class VisitService {
         }
       },
       include: {
-        encounter: true
+        encounters: true
       },
       orderBy: {
         startDate: 'desc'
@@ -108,29 +108,21 @@ export class VisitService {
     });
   }
 
-  async addEncounterToVisit(visitId: string, encounter: Omit<Encounter, 'id' | 'createdAt' | 'updatedAt'>): Promise<any> {
-    return await this.db.$transaction(async (tx) => {
-      const createdEncounter = await tx.encounter.create({
-        data: encounter,
-        include: {
-          patient: {
-            include: {
-              person: true
-            }
-          },
-          provider: true,
-          location: true
-        }
-      });
-      
-      await tx.visit.update({
-        where: { id: visitId },
-        data: {
-          encounterId: createdEncounter.id
-        }
-      });
-      
-      return createdEncounter;
+  async addEncounterToVisit(visitId: string, encounter: { patientId: string; providerId: string; locationId?: string; encounterType: string; startDate: Date; endDate?: Date; notes?: string }): Promise<any> {
+    return await this.db.encounter.create({
+      data: {
+        ...encounter,
+        visitId
+      },
+      include: {
+        patient: {
+          include: {
+            person: true
+          }
+        },
+        provider: true,
+        location: true
+      }
     });
   }
 
@@ -146,7 +138,7 @@ export class VisitService {
   async listVisits(): Promise<any[]> {
     return await this.db.visit.findMany({
       include: {
-        encounter: true
+        encounters: true
       },
       orderBy: {
         startDate: 'desc'
@@ -155,7 +147,7 @@ export class VisitService {
     });
   }
 
-  async updateVisit(id: string, data: Partial<Visit>): Promise<any> {
+  async updateVisit(id: string, data: { visitType?: string; startDate?: Date; endDate?: Date; notes?: string }): Promise<any> {
     return await this.db.visit.update({
       where: { id },
       data

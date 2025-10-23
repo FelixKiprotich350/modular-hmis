@@ -1,6 +1,11 @@
-import { PrismaClient } from '@prisma/client';
-import { Patient, PatientIdentifier, Person, PersonAddress } from '../models/patient.model';
-import { RegisterPatientDto } from '../dto/register-patient.dto';
+import { PrismaClient } from "@prisma/client";
+import {
+  Patient,
+  PatientIdentifier,
+  Person,
+  PersonAddress,
+} from "../models/patient.model";
+import { RegisterPatientDto } from "../dto/register-patient.dto";
 
 export interface PatientRegistrationData extends RegisterPatientDto {}
 
@@ -20,7 +25,9 @@ export class PatientService {
   async registerPatient(data: PatientRegistrationData): Promise<any> {
     const existing = await this.findDuplicates(data);
     if (existing.length > 0) {
-      throw new Error(`Potential duplicate found: ${existing.length} similar patients`);
+      throw new Error(
+        `Potential duplicate found: ${existing.length} similar patients`
+      );
     }
 
     return await this.db.$transaction(async (tx) => {
@@ -37,8 +44,8 @@ export class PatientService {
           dead: data.dead || false,
           deathDate: data.deathDate,
           causeOfDeath: data.causeOfDeath,
-          deathCertificateNumber: data.deathCertificateNumber
-        }
+          deathCertificateNumber: data.deathCertificateNumber,
+        },
       });
 
       // Create patient with identifiers
@@ -47,8 +54,10 @@ export class PatientService {
         const id = data.identifiers[i];
         identifiersData.push({
           identifierTypeId: id.identifierTypeId,
-          identifier: id.identifier || await this.generatePatientId(id.identifierTypeId),
-          preferred: id.preferred ?? (i === 0)
+          identifier:
+            id.identifier ||
+            (await this.generatePatientId(id.identifierTypeId)),
+          preferred: id.preferred ?? i === 0,
         });
       }
 
@@ -56,13 +65,13 @@ export class PatientService {
         data: {
           personId: person.id,
           identifiers: {
-            create: identifiersData
-          }
+            create: identifiersData,
+          },
         },
         include: {
           person: true,
-          identifiers: true
-        }
+          identifiers: true,
+        },
       });
 
       // Create addresses
@@ -70,38 +79,38 @@ export class PatientService {
         await tx.personAddress.createMany({
           data: data.addresses.map((addr, index) => ({
             personId: person.id,
-            preferred: addr.preferred ?? (index === 0),
+            preferred: addr.preferred ?? index === 0,
             address1: addr.address1,
             address2: addr.address2,
             cityVillage: addr.cityVillage,
             stateProvince: addr.stateProvince,
             country: addr.country,
             postalCode: addr.postalCode,
-            countyDistrict: addr.countyDistrict
-          }))
+            countyDistrict: addr.countyDistrict,
+          })),
         });
       }
 
       // Create contacts
       if (data.contacts?.length) {
         await tx.personContact.createMany({
-          data: data.contacts.map(contact => ({
+          data: data.contacts.map((contact) => ({
             personId: person.id,
             type: contact.type,
             value: contact.value,
-            preferred: contact.preferred || false
-          }))
+            preferred: contact.preferred || false,
+          })),
         });
       }
 
       // Create attributes
       if (data.attributes?.length) {
         await tx.personAttribute.createMany({
-          data: data.attributes.map(attr => ({
+          data: data.attributes.map((attr) => ({
             personId: person.id,
             attributeTypeId: attr.attributeTypeId,
-            value: attr.value
-          }))
+            value: attr.value,
+          })),
         });
       }
 
@@ -109,7 +118,7 @@ export class PatientService {
       if (data.relationships?.length) {
         for (const rel of data.relationships) {
           let personBId = rel.personBId;
-          
+
           if (!personBId && rel.personB) {
             const relatedPerson = await tx.person.create({
               data: {
@@ -118,8 +127,8 @@ export class PatientService {
                 middleName: rel.personB.middleName,
                 sex: rel.personB.sex,
                 gender: rel.personB.gender,
-                birthdate: rel.personB.birthdate
-              }
+                birthdate: rel.personB.birthdate,
+              },
             });
             personBId = relatedPerson.id;
           }
@@ -130,8 +139,8 @@ export class PatientService {
                 personAId: person.id,
                 personBId,
                 relationshipTypeId: rel.relationshipTypeId,
-                startDate: rel.startDate
-              }
+                startDate: rel.startDate,
+              },
             });
           }
         }
@@ -145,9 +154,9 @@ export class PatientService {
               firstName: nok.firstName,
               lastName: nok.lastName,
               middleName: nok.middleName,
-              sex: 'U', // Default sex for next of kin
-              gender: 'Man' // Default gender for next of kin
-            }
+              sex: "U", // Default sex for next of kin
+              gender: "Man", // Default gender for next of kin
+            },
           });
 
           await tx.nextOfKin.create({
@@ -158,8 +167,8 @@ export class PatientService {
               priority: nok.priority || 1,
               contactPhone: nok.contactPhone,
               contactEmail: nok.contactEmail,
-              address: nok.address
-            }
+              address: nok.address,
+            },
           });
         }
       }
@@ -170,39 +179,39 @@ export class PatientService {
 
   async searchPatients(criteria: PatientSearchCriteria): Promise<any[]> {
     const where: any = {};
-    
+
     if (criteria.identifier) {
       where.identifiers = {
         some: {
           identifier: {
             contains: criteria.identifier,
-            mode: 'insensitive'
-          }
-        }
+            mode: "insensitive",
+          },
+        },
       };
     }
-    
+
     if (criteria.name) {
       where.person = {
         OR: [
-          { firstName: { contains: criteria.name, mode: 'insensitive' } },
-          { lastName: { contains: criteria.name, mode: 'insensitive' } }
-        ]
+          { firstName: { contains: criteria.name, mode: "insensitive" } },
+          { lastName: { contains: criteria.name, mode: "insensitive" } },
+        ],
       };
     }
-    
+
     if (criteria.gender) {
       where.person = { ...where.person, gender: criteria.gender };
     }
-    
+
     return await this.db.patient.findMany({
       where,
       include: {
         person: true,
-        identifiers: true
+        identifiers: true,
       },
       skip: criteria.offset || 0,
-      take: criteria.limit || 20
+      take: criteria.limit || 20,
     });
   }
 
@@ -211,69 +220,108 @@ export class PatientService {
       where: {
         person: {
           AND: [
-            { firstName: { equals: data.firstName, mode: 'insensitive' } },
-            { lastName: { equals: data.lastName, mode: 'insensitive' } },
-            data.birthdate ? { birthdate: data.birthdate } : {}
-          ]
-        }
+            { firstName: { equals: data.firstName, mode: "insensitive" } },
+            { lastName: { equals: data.lastName, mode: "insensitive" } },
+            data.birthdate ? { birthdate: data.birthdate } : {},
+          ],
+        },
       },
       include: {
         person: true,
-        identifiers: true
-      }
+        identifiers: true,
+      },
     });
-    
+
     return duplicates;
   }
 
-  async createPatient(personData: Omit<Person, 'id' | 'createdAt' | 'updatedAt'>, identifierTypeId: string): Promise<Patient> {
+  async createPatient(
+    personData: Omit<Person, "id" | "createdAt" | "updatedAt">,
+    identifierTypeId: string
+  ): Promise<Patient> {
     const registrationData: PatientRegistrationData = {
       firstName: personData.firstName,
       lastName: personData.lastName,
       middleName: personData.middleName,
-      sex: personData.sex as 'M' | 'F' | 'U' | 'O',
-      gender: personData.gender as 'Man' | 'Woman' | 'Transgender',
+      sex: personData.sex as "M" | "F" | "U" | "O",
+      gender: personData.gender as "Man" | "Woman" | "Transgender",
       birthdate: personData.birthdate,
       birthdateEstimated: personData.birthdateEstimated,
-      identifiers: [{ identifierTypeId, preferred: true }]
+      identifiers: [{ identifierTypeId, preferred: true }],
     };
-    
+
     return this.registerPatient(registrationData);
   }
 
-  async getPatient(id: string): Promise<any> {
-    return await this.db.patient.findUnique({
+  async getPatient(
+    id: string,
+    options?: { type: string; data: any }
+  ): Promise<any> {
+    const query: any = {
       where: { id },
-      include: {
+    };
+
+    // Default to including person details
+    query.include = {
+      person: {
+        include: {
+          addresses: true,
+          attributes: {
+            include: {
+              attributeType: true,
+            },
+          },
+          contacts: true,
+          relationships: {
+            include: {
+              personB: true,
+              relationshipType: true,
+            },
+          },
+          nextOfKin: {
+            include: {
+              nextOfKinPerson: true,
+            },
+          },
+        },
+      },
+    };
+
+    if (options?.type === "custom" && options.data) {
+      query.select = options.data;
+    } else if (options?.type === "full") {
+      query.include = {
         person: {
           include: {
             addresses: true,
             attributes: {
               include: {
-                attributeType: true
-              }
+                attributeType: true,
+              },
             },
             contacts: true,
             relationships: {
               include: {
                 personB: true,
-                relationshipType: true
-              }
+                relationshipType: true,
+              },
             },
             nextOfKin: {
               include: {
-                nextOfKinPerson: true
-              }
-            }
-          }
+                nextOfKinPerson: true,
+              },
+            },
+          },
         },
         identifiers: {
           include: {
-            identifierType: true
-          }
-        }
-      }
-    });
+            identifierType: true,
+          },
+        },
+      };
+    }
+
+    return await this.db.patient.findUnique(query);
   }
 
   async getPatientByIdentifier(identifier: string): Promise<any> {
@@ -281,44 +329,61 @@ export class PatientService {
       where: {
         identifiers: {
           some: {
-            identifier
-          }
-        }
+            identifier,
+          },
+        },
       },
       include: {
         person: true,
-        identifiers: true
-      }
+        identifiers: true,
+      },
     });
   }
 
-  async addIdentifier(patientId: string, identifierTypeId: string, identifier: string): Promise<any> {
+  async addIdentifier(
+    patientId: string,
+    identifierTypeId: string,
+    identifier: string
+  ): Promise<any> {
     return await this.db.patientIdentifier.create({
       data: {
         patientId,
         identifierTypeId,
         identifier,
-        preferred: false
-      }
+        preferred: false,
+      },
     });
   }
 
   private async generatePatientId(identifierTypeId: string): Promise<string> {
     const count = await this.db.patient.count();
-    return `P${(count + 1).toString().padStart(6, '0')}`;
+    return `P${(count + 1).toString().padStart(6, "0")}`;
   }
 
-  async listPatients(): Promise<any[]> {
-    return await this.db.patient.findMany({
-      include: {
-        person: true,
-        identifiers: true
-      },
-      take: 50
-    });
+  async listPatients(options?: { type: string; data: any }): Promise<any[]> {
+    const query: any = {
+      take: 50,
+    };
+    // Default to including person details
+    query.include = {
+      person: true,
+    };
+
+    if (options?.type === "custom" && options.data) {
+      query.select = options.data;
+    } else if (options?.type === "full") {
+      query.include = {
+        identifiers: true,
+      };
+    }
+
+    return await this.db.patient.findMany(query);
   }
 
-  async updatePatient(id: string, data: Partial<Patient>): Promise<Patient | null> {
+  async updatePatient(
+    id: string,
+    data: Partial<Patient>
+  ): Promise<Patient | null> {
     return null;
   }
 

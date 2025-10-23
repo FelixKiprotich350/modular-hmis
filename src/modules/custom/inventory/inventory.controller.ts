@@ -24,7 +24,7 @@ export class InventoryController {
   @ApiBody({ type: CreateInventoryDto })
   async create(@Body() createDto: CreateInventoryDto) {
     const item = await this.inventoryService.createItem(createDto);
-    return { success: true, data: item };
+    return item;
   }
 
   @Get()
@@ -36,14 +36,14 @@ export class InventoryController {
   async findAll(@Query('category') category?: string, @Query('search') search?: string) {
     if (search) {
       const items = await this.inventoryService.searchItems(search);
-      return { success: true, data: items };
+      return items;
     }
     if (category) {
       const items = await this.inventoryService.getItemsByCategory(category);
-      return { success: true, data: items };
+      return items;
     }
     const items = await this.inventoryService.listItems();
-    return { success: true, data: items };
+    return items;
   }
 
   @Get('low-stock')
@@ -52,7 +52,7 @@ export class InventoryController {
   @ApiResponse({ status: 200, description: 'Low stock items retrieved successfully' })
   async getLowStock() {
     const items = await this.inventoryService.getLowStockItems();
-    return { success: true, data: items };
+    return items;
   }
 
   @Get('expiring')
@@ -63,7 +63,7 @@ export class InventoryController {
   async getExpiring(@Query('days') days?: string) {
     const daysNumber = days ? parseInt(days) : 30;
     const items = await this.inventoryService.getExpiringItems(daysNumber);
-    return { success: true, data: items };
+    return items;
   }
 
   @Get('report')
@@ -73,7 +73,7 @@ export class InventoryController {
   @ApiQuery({ name: 'category', required: false, description: 'Filter report by category' })
   async generateReport(@Query('category') category?: string) {
     const report = await this.inventoryService.generateStockReport(category);
-    return { success: true, data: report };
+    return report;
   }
 
   @Get(':id')
@@ -82,7 +82,7 @@ export class InventoryController {
   @ApiResponse({ status: 200, description: 'Inventory item retrieved successfully' })
   async findOne(@Param('id') id: string) {
     const item = await this.inventoryService.getItem(id);
-    return { success: true, data: item };
+    return item;
   }
 
   @Post(':id/adjust-stock')
@@ -106,7 +106,7 @@ export class InventoryController {
       adjustmentData.reason,
       user.id
     );
-    return { success: true, data: result };
+    return result;
   }
 
   @Post('transfer')
@@ -128,7 +128,7 @@ export class InventoryController {
       transferData.quantity,
       user.id
     );
-    return { success: true, data: result };
+    return result;
   }
 
   @Patch(':id')
@@ -139,7 +139,7 @@ export class InventoryController {
   @ApiBody({ type: UpdateInventoryDto })
   async update(@Param('id') id: string, @Body() updateDto: UpdateInventoryDto) {
     const item = await this.inventoryService.updateItem(id, updateDto);
-    return { success: true, data: item };
+    return item;
   }
 
   @Delete(':id')
@@ -149,6 +149,6 @@ export class InventoryController {
   @ApiResponse({ status: 200, description: 'Inventory item deleted successfully' })
   async remove(@Param('id') id: string) {
     await this.inventoryService.deleteItem(id);
-    return { success: true, message: 'Inventory item deleted successfully' };
+    return 'Inventory item deleted successfully';
   }
 }

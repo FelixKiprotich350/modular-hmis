@@ -34,7 +34,7 @@ export class InsuranceController {
   @ApiBody({ type: CreateInsuranceDto })
   async create(@Body() createDto: CreateInsuranceDto) {
     const insurance = await this.insuranceService.createInsurance(createDto);
-    return { success: true, data: insurance };
+    return insurance;
   }
 
   @Get()
@@ -43,7 +43,7 @@ export class InsuranceController {
   @ApiResponse({ status: 200, description: 'List of insurance records retrieved successfully' })
   async findAll() {
     const insurances = await this.insuranceService.listInsurances();
-    return { success: true, data: insurances };
+    return insurances;
   }
 
   @Get('verify/:policyNumber')
@@ -52,7 +52,7 @@ export class InsuranceController {
   @ApiResponse({ status: 200, description: 'Insurance verification completed' })
   async verifyInsurance(@Param('policyNumber') policyNumber: string) {
     const verification = await this.insuranceService.verifyInsurance(policyNumber);
-    return { success: true, data: verification };
+    return verification;
   }
 
   @Get('coverage/:insuranceId/:serviceCode')
@@ -61,7 +61,7 @@ export class InsuranceController {
   @ApiResponse({ status: 200, description: 'Coverage information retrieved successfully' })
   async getCoverage(@Param('insuranceId') insuranceId: string, @Param('serviceCode') serviceCode: string) {
     const coverage = await this.insuranceService.getInsuranceCoverage(insuranceId, serviceCode);
-    return { success: true, data: coverage };
+    return coverage;
   }
 
   @Get('reports')
@@ -72,7 +72,7 @@ export class InsuranceController {
   @ApiQuery({ name: 'endDate', required: true, description: 'Report end date' })
   async generateReport(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
     const report = await this.insuranceService.generateInsuranceReport(new Date(startDate), new Date(endDate));
-    return { success: true, data: report };
+    return report;
   }
 
   @Get(':id')
@@ -81,7 +81,7 @@ export class InsuranceController {
   @ApiResponse({ status: 200, description: 'Insurance record retrieved successfully' })
   async findOne(@Param('id') id: string) {
     const insurance = await this.insuranceService.getInsurance(id);
-    return { success: true, data: insurance };
+    return insurance;
   }
 
   @Post('claims/submit')
@@ -101,7 +101,7 @@ export class InsuranceController {
       claimData.billingId,
       claimData.amount
     );
-    return { success: true, data: claim };
+    return claim;
   }
 
   @Post('claims/:claimNumber/process')
@@ -121,7 +121,7 @@ export class InsuranceController {
       processData.status,
       processData.denialReason
     );
-    return { success: true, data: result };
+    return result;
   }
 
   @Patch(':id')
@@ -132,7 +132,7 @@ export class InsuranceController {
   @ApiBody({ type: UpdateInsuranceDto })
   async update(@Param('id') id: string, @Body() updateDto: UpdateInsuranceDto) {
     const insurance = await this.insuranceService.updateInsurance(id, updateDto);
-    return { success: true, data: insurance };
+    return insurance;
   }
 
   @Delete(':id')
@@ -142,6 +142,6 @@ export class InsuranceController {
   @ApiResponse({ status: 200, description: 'Insurance record deleted successfully' })
   async remove(@Param('id') id: string) {
     await this.insuranceService.deleteInsurance(id);
-    return { success: true, message: 'Insurance record deleted successfully' };
+    return 'Insurance record deleted successfully';
   }
 }

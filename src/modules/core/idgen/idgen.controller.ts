@@ -38,7 +38,7 @@ export class IdgenController {
   @Post('reserve/:sourceId')
   async reserveIdentifiers(@Param('sourceId') sourceId: string, @Body() data: { count: number }) {
     const identifiers = await this.idgenService.reserveIdentifiers(sourceId, data.count);
-    return { identifiers, count: identifiers.length };
+    return identifiers.length;
   }
 
   @Get('validate')
@@ -54,6 +54,6 @@ export class IdgenController {
       const pooled = await this.idgenService.addToPool(sourceId, identifier);
       results.push(pooled);
     }
-    return { added: results.length, identifiers: results };
+    return results;
   }
 }

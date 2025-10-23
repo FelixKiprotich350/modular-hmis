@@ -38,7 +38,7 @@ export class ProvidersController {
   @ApiBody({ type: CreateProviderDto })
   async create(@Body() createDto: CreateProviderDto) {
     const provider = await this.providersService.createProvider(createDto, createDto.identifier);
-    return { message: 'Provider created', provider };
+    return provider;
   }
 
   @Get('search')
@@ -46,7 +46,7 @@ export class ProvidersController {
   @ApiOperation({ summary: 'Search providers' })
   async search(@Query('q') query: string) {
     const providers = await this.providersService.searchProviders(query);
-    return { providers, query };
+    return { ...providers, query };
   }
 
   @Get('roles')
@@ -54,7 +54,7 @@ export class ProvidersController {
   @ApiOperation({ summary: 'Get provider roles' })
   async getRoles() {
     const roles = await this.providersService.getProviderRoles();
-    return { roles };
+    return roles;
   }
 
   @Get('by-role/:roleId')
@@ -86,7 +86,7 @@ export class ProvidersController {
   @ApiOperation({ summary: 'Add provider attribute' })
   async addAttribute(@Param('id') providerId: string, @Body() data: { attributeTypeId: string; value: string }) {
     const attribute = await this.providersService.addProviderAttribute(providerId, data.attributeTypeId, data.value);
-    return { message: 'Attribute added', attribute };
+    return attribute;
   }
 
   @Post(':id/roles')
@@ -94,7 +94,7 @@ export class ProvidersController {
   @ApiOperation({ summary: 'Assign provider role' })
   async assignRole(@Param('id') providerId: string, @Body() data: { roleId: string; locationId?: string }) {
     const assignment = await this.providersService.assignProviderRole(providerId, data.roleId, data.locationId);
-    return { message: 'Role assigned', assignment };
+    return assignment;
   }
 
   @Put(':id/retire')
@@ -102,7 +102,7 @@ export class ProvidersController {
   @ApiOperation({ summary: 'Retire provider' })
   async retire(@Param('id') providerId: string, @Body() data: { reason?: string }) {
     const provider = await this.providersService.retireProvider(providerId, data.reason);
-    return { message: 'Provider retired', provider };
+    return  provider;
   }
 
   @Get()
@@ -111,7 +111,7 @@ export class ProvidersController {
   @ApiResponse({ status: 200, description: 'List of providers' })
   async findAll() {
     const providers = await this.providersService.listProviders();
-    return { providers };
+    return providers;
   }
 
   @Get(':id')
@@ -119,7 +119,7 @@ export class ProvidersController {
   @ApiOperation({ summary: 'Get provider by ID' })
   async findOne(@Param('id') id: string) {
     const provider = await this.providersService.getProvider(id);
-    return { provider };
+    return provider;
   }
 
   @Patch(':id')
@@ -128,7 +128,7 @@ export class ProvidersController {
   @ApiBody({ type: UpdateProviderDto })
   async update(@Param('id') id: string, @Body() updateDto: UpdateProviderDto) {
     const provider = await this.providersService.updateProvider(id, updateDto);
-    return { message: 'Provider updated', provider };
+    return provider;
   }
 
   @Delete(':id')
@@ -136,6 +136,6 @@ export class ProvidersController {
   @ApiOperation({ summary: 'Delete provider' })
   async remove(@Param('id') id: string) {
     const deleted = await this.providersService.deleteProvider(id);
-    return { message: 'Provider deleted', deleted };
+    return  deleted;
   }
 }

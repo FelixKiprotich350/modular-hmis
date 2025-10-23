@@ -24,7 +24,7 @@ export class PharmacyController {
   @ApiBody({ type: CreatePharmacyDto })
   async createPrescription(@Body() createDto: CreatePharmacyDto) {
     const prescription = await this.pharmacyService.createPrescription(createDto);
-    return { success: true, data: prescription };
+    return prescription;
   }
 
   @Get('prescriptions')
@@ -36,10 +36,10 @@ export class PharmacyController {
   async findAllPrescriptions(@Query('patientId') patientId?: string, @Query('status') status?: string) {
     if (patientId) {
       const prescriptions = await this.pharmacyService.getPatientPrescriptions(patientId, status);
-      return { success: true, data: prescriptions };
+      return prescriptions;
     }
     const prescriptions = await this.pharmacyService.listPrescriptions();
-    return { success: true, data: prescriptions };
+    return prescriptions;
   }
 
   @Get('prescriptions/pending')
@@ -48,7 +48,7 @@ export class PharmacyController {
   @ApiResponse({ status: 200, description: 'Pending prescriptions retrieved successfully' })
   async getPendingPrescriptions() {
     const prescriptions = await this.pharmacyService.getPendingPrescriptions();
-    return { success: true, data: prescriptions };
+    return prescriptions;
   }
 
   @Get('medications/search')
@@ -58,7 +58,7 @@ export class PharmacyController {
   @ApiQuery({ name: 'q', required: true, description: 'Search query' })
   async searchMedications(@Query('q') query: string) {
     const medications = await this.pharmacyService.searchMedications(query);
-    return { success: true, data: medications };
+    return medications;
   }
 
   @Post('drug-interactions')
@@ -67,7 +67,7 @@ export class PharmacyController {
   @ApiResponse({ status: 200, description: 'Drug interactions checked successfully' })
   async checkDrugInteractions(@Body() data: { medications: string[] }) {
     const interactions = await this.pharmacyService.getDrugInteractions(data.medications);
-    return { success: true, data: interactions };
+    return interactions;
   }
 
   @Get('reports')
@@ -78,7 +78,7 @@ export class PharmacyController {
   @ApiQuery({ name: 'endDate', required: true, description: 'Report end date' })
   async generateReport(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
     const report = await this.pharmacyService.generatePharmacyReport(new Date(startDate), new Date(endDate));
-    return { success: true, data: report };
+    return report;
   }
 
   @Get('prescriptions/:id')
@@ -87,7 +87,7 @@ export class PharmacyController {
   @ApiResponse({ status: 200, description: 'Prescription retrieved successfully' })
   async findOnePrescription(@Param('id') id: string) {
     const prescription = await this.pharmacyService.getPrescription(id);
-    return { success: true, data: prescription };
+    return prescription;
   }
 
   @Post('prescriptions/:id/dispense')
@@ -109,7 +109,7 @@ export class PharmacyController {
       dispensationData.quantityDispensed,
       dispensationData.notes
     );
-    return { success: true, data: result };
+    return result;
   }
 
   @Post('prescriptions/:id/refill')
@@ -123,7 +123,7 @@ export class PharmacyController {
     @User() user: any
   ) {
     const refill = await this.pharmacyService.refillPrescription(id, refillData.quantity, user.id);
-    return { success: true, data: refill };
+    return refill;
   }
 
   @Patch('prescriptions/:id')
@@ -134,7 +134,7 @@ export class PharmacyController {
   @ApiBody({ type: UpdatePharmacyDto })
   async updatePrescription(@Param('id') id: string, @Body() updateDto: UpdatePharmacyDto) {
     const prescription = await this.pharmacyService.updatePrescription(id, updateDto);
-    return { success: true, data: prescription };
+    return prescription;
   }
 
   @Delete('prescriptions/:id')
@@ -144,6 +144,6 @@ export class PharmacyController {
   @ApiResponse({ status: 200, description: 'Prescription deleted successfully' })
   async removePrescription(@Param('id') id: string) {
     await this.pharmacyService.deletePrescription(id);
-    return { success: true, message: 'Prescription deleted successfully' };
+    return 'Prescription deleted successfully';
   }
 }

@@ -20,6 +20,7 @@
     "@nestjs/swagger": "^7.4.2",
     "@prisma/client": "^5.0.0",
     "@types/bcryptjs": "^2.4.6",
+    "@types/uuid": "^10.0.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
     "express": "^4.18.0",
@@ -27,7 +28,8 @@
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.0",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "^7.8.0"
+    "rxjs": "^7.8.0",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

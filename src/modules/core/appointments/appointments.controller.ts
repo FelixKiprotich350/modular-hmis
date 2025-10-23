@@ -11,13 +11,13 @@ export class AppointmentsController {
   @Post()
   async createAppointment(@Body() createAppointmentDto: Omit<Appointment, 'id' | 'createdAt' | 'updatedAt'>) {
     const appointment = await this.appointmentService.createAppointment(createAppointmentDto);
-    return { message: 'Appointment created', appointment };
+    return appointment;
   }
 
   @Get('types')
   async getAppointmentTypes() {
     const types = await this.appointmentService.getAppointmentTypes();
-    return { types };
+    return types;
   }
 
   @Get('patient/:patientId')
@@ -48,7 +48,7 @@ export class AppointmentsController {
   @Post('blocks')
   async createAppointmentBlock(@Body() blockData: { providerId: string; locationId: string; startDate: Date; endDate: Date; appointmentTypeId: string; maxAppointments: number }) {
     const block = await this.appointmentService.createAppointmentBlock(blockData);
-    return { message: 'Appointment block created', block };
+    return  block;
   }
 
   @Get('provider/:providerId/schedule')
@@ -60,42 +60,42 @@ export class AppointmentsController {
   @Put(':id/reschedule')
   async rescheduleAppointment(@Param('id') appointmentId: string, @Body() data: { newDate: Date; newTime: string }) {
     const appointment = await this.appointmentService.rescheduleAppointment(appointmentId, data.newDate, data.newTime);
-    return { message: 'Appointment rescheduled', appointment };
+    return appointment;
   }
 
   @Put(':id/cancel')
   async cancelAppointment(@Param('id') appointmentId: string, @Body() data: { reason?: string }) {
     const appointment = await this.appointmentService.cancelAppointment(appointmentId, data.reason);
-    return { message: 'Appointment cancelled', appointment };
+    return  appointment;
   }
 
   @Put(':id/checkin')
   async checkInAppointment(@Param('id') appointmentId: string) {
     const appointment = await this.appointmentService.checkInAppointment(appointmentId);
-    return { message: 'Patient checked in', appointment };
+    return  appointment;
   }
 
   @Get()
   async listAppointments() {
     const appointments = await this.appointmentService.listAppointments();
-    return { appointments };
+    return appointments;
   }
 
   @Get(':id')
   async getAppointment(@Param('id') id: string) {
     const appointment = await this.appointmentService.getAppointment(id);
-    return { appointment };
+    return appointment;
   }
 
   @Put(':id')
   async updateAppointment(@Param('id') id: string, @Body() updateData: Partial<Appointment>) {
     const appointment = await this.appointmentService.updateAppointment(id, updateData);
-    return { message: 'Appointment updated', appointment };
+    return  appointment;
   }
 
   @Delete(':id')
   async deleteAppointment(@Param('id') id: string) {
     const deleted = await this.appointmentService.deleteAppointment(id);
-    return { message: 'Appointment deleted', deleted };
+    return  deleted;
   }
 }

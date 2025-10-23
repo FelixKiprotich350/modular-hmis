@@ -1,9 +1,23 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
-import { AuthGuard } from '../../../core/guards/auth.guard';
-import { PrivilegeGuard } from '../../../core/guards/privilege.guard';
-import { Privileges } from '../../../core/decorators/privileges.decorator';
-
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from "@nestjs/common";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiBody,
+} from "@nestjs/swagger";
+import { AuthGuard } from "../../../core/guards/auth.guard";
+import { PrivilegeGuard } from "../../../core/guards/privilege.guard";
+import { Privileges } from "../../../core/decorators/privileges.decorator";
 
 class CreateSettingDto {
   key: string;
@@ -18,47 +32,47 @@ class UpdateSettingDto {
   description?: string;
 }
 
-@ApiTags('Settings')
-@Controller({ path: 'settings', version: '1' })
+@ApiTags("Settings")
+@Controller({ path: "settings", version: "1" })
 @UseGuards(AuthGuard, PrivilegeGuard)
 @ApiBearerAuth()
 export class SettingsController {
   @Post()
-  @Privileges('manage_settings')
-  @ApiOperation({ summary: 'Create setting' })
-  @ApiResponse({ status: 201, description: 'Setting created' })
+  @Privileges("manage_settings")
+  @ApiOperation({ summary: "Create setting" })
+  @ApiResponse({ status: 201, description: "Setting created" })
   @ApiBody({ type: CreateSettingDto })
   create(@Body() createDto: CreateSettingDto) {
-    return { message: 'Setting created', data: createDto };
+    return createDto;
   }
 
   @Get()
-  @Privileges('manage_settings')
-  @ApiOperation({ summary: 'Get all settings' })
-  @ApiResponse({ status: 200, description: 'List of settings' })
+  @Privileges("manage_settings")
+  @ApiOperation({ summary: "Get all settings" })
+  @ApiResponse({ status: 200, description: "List of settings" })
   findAll() {
-    return { message: 'Settings API', data: [] };
+    return [];
   }
 
-  @Get(':id')
-  @Privileges('manage_settings')
-  @ApiOperation({ summary: 'Get setting by ID' })
-  findOne(@Param('id') id: string) {
-    return { message: `Setting ${id}`, data: null };
+  @Get(":id")
+  @Privileges("manage_settings")
+  @ApiOperation({ summary: "Get setting by ID" })
+  findOne(@Param("id") id: string) {
+    return { message: `Setting ${id}` };
   }
 
-  @Patch(':id')
-  @Privileges('manage_settings')
-  @ApiOperation({ summary: 'Update setting' })
+  @Patch(":id")
+  @Privileges("manage_settings")
+  @ApiOperation({ summary: "Update setting" })
   @ApiBody({ type: UpdateSettingDto })
-  update(@Param('id') id: string, @Body() updateDto: UpdateSettingDto) {
-    return { message: `Setting ${id} updated`, data: updateDto };
+  update(@Param("id") id: string, @Body() updateDto: UpdateSettingDto) {
+    return { message: `Setting ${id} updated`, ...updateDto };
   }
 
-  @Delete(':id')
-  @Privileges('manage_settings')
-  @ApiOperation({ summary: 'Delete setting' })
-  remove(@Param('id') id: string) {
+  @Delete(":id")
+  @Privileges("manage_settings")
+  @ApiOperation({ summary: "Delete setting" })
+  remove(@Param("id") id: string) {
     return { message: `Setting ${id} deleted` };
   }
 }

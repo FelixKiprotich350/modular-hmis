@@ -210,11 +210,15 @@ async function main() {
   ];
 
   for (const relType of relationshipTypes) {
-    await prisma.relationshipType.upsert({
-      where: { aIsToB: relType.aIsToB },
-      update: {},
-      create: relType
+    const existing = await prisma.relationshipType.findFirst({
+      where: { aIsToB: relType.aIsToB }
     });
+    
+    if (!existing) {
+      await prisma.relationshipType.create({
+        data: relType
+      });
+    }
   }
 
   // Create person attribute types
@@ -242,7 +246,8 @@ async function main() {
       person: {
         firstName: 'John',
         lastName: 'Doe',
-        gender: 'M',
+        sex: 'M',
+        gender: 'Man',
         birthdate: new Date('1985-03-15')
       },
       identifiers: [{ type: nationalIdType.id, value: 'ID123456789', preferred: true }],
@@ -263,7 +268,8 @@ async function main() {
       person: {
         firstName: 'Jane',
         lastName: 'Smith',
-        gender: 'F',
+        sex: 'F',
+        gender: 'Woman',
         birthdate: new Date('1990-07-22')
       },
       identifiers: [{ type: nationalIdType.id, value: 'ID987654321', preferred: true }],

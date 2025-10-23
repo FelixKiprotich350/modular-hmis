@@ -9,7 +9,6 @@ import { PrivilegeGuard } from "./core/guards/privilege.guard";
 import { TransactionService } from "./core/transaction.service";
 import { AuditInterceptor } from "./core/interceptors/audit.interceptor";
 import { LoggingInterceptor } from "./core/interceptors/logging.interceptor";
-import { FhirTransformerService } from "./core/fhir/fhir-transformer.service";
 import { APP_INTERCEPTOR } from "@nestjs/core";
 
 @Module({})
@@ -24,7 +23,6 @@ export class AppModule {
       AuthGuard,
       PrivilegeGuard,
       TransactionService,
-      FhirTransformerService,
       {
         provide: APP_INTERCEPTOR,
         useClass: AuditInterceptor,

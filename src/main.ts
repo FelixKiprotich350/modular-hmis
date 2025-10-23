@@ -3,6 +3,7 @@ import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { VersioningType } from "@nestjs/common";
 import { AppModule } from "./app.module";
 import { requestLogger } from "./core/serverlog";
+import { ResponseInterceptor } from "./core/interceptors/response.interceptor";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule.forRoot(), {
@@ -11,6 +12,9 @@ async function bootstrap() {
 
   // Enable request logging
   app.use(requestLogger);
+  
+  // Enable response interceptor
+  app.useGlobalInterceptors(new ResponseInterceptor());
 
   app.enableCors({
     origin: true,

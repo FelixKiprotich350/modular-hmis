@@ -4,18 +4,94 @@ import { Location, LocationTag, LocationAttribute } from '../models/location.mod
 export class LocationService {
   constructor(private db: PrismaClient) {}
 
-  async createLocation(data: Omit<Location, 'id' | 'createdAt' | 'updatedAt'>): Promise<any> {
-    return await this.db.location.create({
-      data
+  // Facility Management
+  async createFacility(data: {
+    name: string;
+    description?: string;
+    address?: string;
+    cityVillage?: string;
+    stateProvince?: string;
+    country?: string;
+    postalCode?: string;
+    phone?: string;
+  }): Promise<any> {
+    return await this.db.facility.create({ data });
+  }
+
+  async getFacility(id: string): Promise<any> {
+    return await this.db.facility.findUnique({
+      where: { id },
+      include: {
+        departments: true,
+        locations: {
+          include: {
+            servicePoints: true,
+            children: true
+          }
+        }
+      }
     });
+  }
+
+  async listFacilities(): Promise<any[]> {
+    return await this.db.facility.findMany({
+      where: { retired: false },
+      include: {
+        departments: true,
+        locations: true
+      }
+    });
+  }
+
+  // Department Management
+  async createDepartment(data: {
+    facilityId: string;
+    name: string;
+    description?: string;
+  }): Promise<any> {
+    return await this.db.department.create({ data });
+  }
+
+  async getFacilityDepartments(facilityId: string): Promise<any[]> {
+    return await this.db.department.findMany({
+      where: { facilityId, retired: false }
+    });
+  }
+
+  // Service Point Management
+  async createServicePoint(data: {
+    locationId: string;
+    name: string;
+    description?: string;
+    serviceType: string;
+  }): Promise<any> {
+    return await this.db.servicePoint.create({ data });
+  }
+
+  async getLocationServicePoints(locationId: string): Promise<any[]> {
+    return await this.db.servicePoint.findMany({
+      where: { locationId, retired: false }
+    });
+  }
+
+  async createLocation(data: {
+    facilityId: string;
+    name: string;
+    description?: string;
+    locationLevel: string;
+    parentLocationId?: string;
+  }): Promise<any> {
+    return await this.db.location.create({ data });
   }
 
   async getLocation(id: string): Promise<any> {
     return await this.db.location.findUnique({
       where: { id },
       include: {
+        facility: true,
         parent: true,
-        children: true
+        children: true,
+        servicePoints: true
       }
     });
   }
@@ -62,8 +138,7 @@ export class LocationService {
       where: {
         OR: [
           { name: { contains: query, mode: 'insensitive' } },
-          { description: { contains: query, mode: 'insensitive' } },
-          { address: { contains: query, mode: 'insensitive' } }
+          { description: { contains: query, mode: 'insensitive' } }
         ],
         retired: false
       }
@@ -108,7 +183,20 @@ export class LocationService {
     return await this.db.location.findMany({
       where: { retired: false },
       include: {
-        parent: true
+        facility: true,
+        parent: true,
+        servicePoints: true
+      }
+    });
+  }
+
+  async getFacilityLocations(facilityId: string): Promise<any[]> {
+    return await this.db.location.findMany({
+      where: { facilityId, retired: false },
+      include: {
+        parent: true,
+        children: true,
+        servicePoints: true
       }
     });
   }

@@ -58,7 +58,7 @@ export class AuthController {
   @ApiHeader({ name: "Authorization", description: "Bearer token" })
   async logout(@Headers("authorization") token: string) {
     await this.authService.logout(token);
-    return { message: "Logout successful" };
+    return "Logout successful";
   }
 
   @Get("me")
@@ -67,6 +67,6 @@ export class AuthController {
   @ApiOperation({ summary: "Get current user" })
   @ApiResponse({ status: 200, description: "Current user info" })
   async getCurrentUser(@User() user: any) {
-    return { user };
+    return user;
   }
 }

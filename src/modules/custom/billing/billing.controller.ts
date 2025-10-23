@@ -23,7 +23,7 @@ export class BillingController {
   @ApiBody({ type: CreateBillingDto })
   async create(@Body() createDto: CreateBillingDto) {
     const billing = await this.billingService.createBilling(createDto);
-    return { success: true, data: billing };
+    return billing;
   }
 
   @Get()
@@ -35,14 +35,14 @@ export class BillingController {
   async findAll(@Query('status') status?: string, @Query('patientId') patientId?: string) {
     if (patientId) {
       const billings = await this.billingService.getPatientBillings(patientId);
-      return { success: true, data: billings };
+      return billings;
     }
     if (status) {
       const billings = await this.billingService.getBillingsByStatus(status);
-      return { success: true, data: billings };
+      return billings;
     }
     const billings = await this.billingService.listBillings();
-    return { success: true, data: billings };
+    return billings;
   }
 
   @Get(':id')
@@ -51,7 +51,7 @@ export class BillingController {
   @ApiResponse({ status: 200, description: 'Billing record retrieved successfully' })
   async findOne(@Param('id') id: string) {
     const billing = await this.billingService.getBilling(id);
-    return { success: true, data: billing };
+    return billing;
   }
 
   @Post(':id/payment')
@@ -64,7 +64,7 @@ export class BillingController {
     @Body() paymentData: { amount: number; method: string }
   ) {
     const result = await this.billingService.processPayment(id, paymentData.amount, paymentData.method);
-    return { success: true, data: result };
+    return result;
   }
 
   @Post(':id/insurance-claim')
@@ -77,7 +77,7 @@ export class BillingController {
     @Body() claimData: { insuranceId: string }
   ) {
     const result = await this.billingService.processInsuranceClaim(id, claimData.insuranceId);
-    return { success: true, data: result };
+    return result;
   }
 
   @Post('generate-invoice')
@@ -92,7 +92,7 @@ export class BillingController {
     }
   ) {
     const invoice = await this.billingService.generateInvoice(invoiceData.patientId, invoiceData.services);
-    return { success: true, data: invoice };
+    return invoice;
   }
 
   @Patch(':id')
@@ -103,7 +103,7 @@ export class BillingController {
   @ApiBody({ type: UpdateBillingDto })
   async update(@Param('id') id: string, @Body() updateDto: UpdateBillingDto) {
     const billing = await this.billingService.updateBilling(id, updateDto);
-    return { success: true, data: billing };
+    return billing;
   }
 
   @Delete(':id')
@@ -113,6 +113,6 @@ export class BillingController {
   @ApiResponse({ status: 200, description: 'Billing record deleted successfully' })
   async remove(@Param('id') id: string) {
     await this.billingService.deleteBilling(id);
-    return { success: true, message: 'Billing record deleted successfully' };
+    return 'Billing record deleted successfully';
   }
 }
